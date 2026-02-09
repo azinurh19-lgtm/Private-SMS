@@ -63,7 +63,7 @@
         </div>
         <input type="file" id="gallery" class="hidden" accept="image/*">
         <input type="text" id="p-name" class="input-pro" placeholder="Enter Your Name">
-        <button class="btn-real" onclick="saveProfile()">ACTIVATE APP</button>
+        <button id="activateBtn" class="btn-real" onclick="saveProfile()">ACTIVATE APP</button>
     </div>
 
     <div id="main-ui" class="hidden">
@@ -132,10 +132,18 @@
         let n = document.getElementById('p-name').value;
         let p = document.getElementById('p-view').src;
         if(!n) return alert("Name is required!");
-        let pin = Math.floor(100000 + Math.random() * 900000);
-        myData = { name: n, photo: p, pin: pin.toString(), contacts: [] };
+        
+        document.getElementById('activateBtn').innerText = "Connecting...";
+        let pin = Math.floor(100000 + Math.random() * 900000).toString();
+        myData = { name: n, photo: p, pin: pin, contacts: [] };
+        
+        // Save locally first so app launches immediately
         localStorage.setItem('real_private_sms_v3', JSON.stringify(myData));
-        await fetch(`${SCRIPT_URL}?action=register&name=${encodeURIComponent(n)}&photo=${encodeURIComponent(p)}&pin=${pin}`);
+        
+        // Background register
+        fetch(`${SCRIPT_URL}?action=register&name=${encodeURIComponent(n)}&photo=${encodeURIComponent(p)}&pin=${pin}`)
+        .catch(e => console.log("Registering in background..."));
+
         launchApp();
     }
 
@@ -153,7 +161,7 @@
 
     async function confirmAddUser() {
         let p = document.getElementById('pin-field').value;
-        if(p === myData.pin) return alert("You cannot add yourself!");
+        if(!p || p === myData.pin) return alert("Enter a valid PIN!");
         document.getElementById('addBtn').innerText = "Searching...";
         try {
             const resp = await fetch(`${SCRIPT_URL}?action=getUser&pin=${p}`);
@@ -166,7 +174,7 @@
                 }
                 toggleModal(false);
             } else { alert("User not found!"); }
-        } catch(e) { alert("Error connecting to server."); }
+        } catch(e) { alert("Check internet connection."); }
         document.getElementById('addBtn').innerText = "Add User";
     }
 
@@ -207,15 +215,16 @@
         localStorage.setItem('chat_history_v3', JSON.stringify(chatHistory));
         loadMessages(activeChatPin);
         document.getElementById('m-input').value = "";
-        await fetch(`${SCRIPT_URL}?action=send&from=${myData.pin}&to=${activeChatPin}&msg=${encodeURIComponent(txt)}&type=chat`);
+        fetch(`${SCRIPT_URL}?action=send&from=${myData.pin}&to=${activeChatPin}&msg=${encodeURIComponent(txt)}&type=chat`);
     }
 
     async function sendSignal(type) {
-        alert("Calling...");
-        await fetch(`${SCRIPT_URL}?action=send&from=${myData.pin}&to=${activeChatPin}&msg=${type}_call&type=signal`);
+        alert("Sending " + type + " call signal...");
+        fetch(`${SCRIPT_URL}?action=send&from=${myData.pin}&to=${activeChatPin}&msg=${type}_call&type=signal`);
     }
 
     function startSync() {
+        // Reduced interval for much faster real-time feel
         setInterval(async () => {
             try {
                 const resp = await fetch(`${SCRIPT_URL}?action=getMessages&myPin=${myData.pin}`);
@@ -224,16 +233,20 @@
                     data.forEach(m => {
                         if(m.type === 'chat') {
                             if(!chatHistory[m.sender]) chatHistory[m.sender] = [];
-                            chatHistory[m.sender].push({ sender: m.sender, text: m.text, time: Date.now() });
+                            // Prevent duplicate messages
+                            const isDuplicate = chatHistory[m.sender].some(old => old.text === m.text && Math.abs(old.time - Date.now()) < 5000);
+                            if(!isDuplicate) {
+                                chatHistory[m.sender].push({ sender: m.sender, text: m.text, time: Date.now() });
+                            }
                         } else if(m.type === 'signal') {
-                            alert("Incoming " + m.text);
+                            alert("Incoming: " + m.text + " from PIN " + m.sender);
                         }
                     });
                     localStorage.setItem('chat_history_v3', JSON.stringify(chatHistory));
                     if(activeChatPin) loadMessages(activeChatPin);
                 }
             } catch(e) {}
-        }, 3000); 
+        }, 2000); 
     }
 
     function toggleChat(s) { if(!s) { document.getElementById('chat-window').classList.add('hidden'); activeChatPin = null; } }
