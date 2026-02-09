@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Private SMS - Real Professional</title>
+    <style>
+        :root { --p-green: #075E54; --s-green: #128C7E; --wa-bg: #E5DDD5; --active: #25D366; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; height: 100%; background: #111; color: white; overflow: hidden; }
+        .hidden { display: none !important; }
+
+        /* Step 1: Real Profile Setup */
+        #setup-page { height: 100%; background: linear-gradient(180deg, var(--p-green), #000); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .profile-circle { width: 150px; height: 150px; border-radius: 50%; border: 4px solid var(--active); overflow: hidden; margin-bottom: 20px; box-shadow: 0 0 20px var(--active); position: relative; cursor: pointer; }
+        .profile-circle img { width: 100%; height: 100%; object-fit: cover; }
+        .input-pro { width: 100%; max-width: 300px; padding: 15px; border-radius: 30px; border: none; outline: none; text-align: center; font-size: 18px; margin-bottom: 20px; background: white; color: black; }
+        .btn-real { background: var(--active); color: white; border: none; padding: 15px 40px; border-radius: 30px; font-weight: bold; font-size: 18px; cursor: pointer; transition: 0.3s; }
+
+        /* Step 2: Main Interface */
+        header { background: var(--p-green); padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .my-info { display: flex; align-items: center; gap: 10px; }
+        .avatar-sm { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid white; }
+        .pin-badge { background: #000; padding: 4px 10px; border-radius: 15px; font-size: 12px; color: var(--active); font-weight: bold; }
+
+        #chat-list-area { height: calc(100% - 75px); background: #fff; overflow-y: auto; color: #000; }
+        .chat-row { display: flex; padding: 15px; border-bottom: 1px solid #eee; align-items: center; cursor: pointer; }
+        .chat-text { margin-left: 15px; flex: 1; }
+        .chat-text b { font-size: 18px; }
+        .chat-text p { margin: 5px 0 0; color: #666; font-size: 14px; }
+
+        /* PIN Modal */
+        #pin-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 85%; max-width: 350px; border-radius: 20px; padding: 25px; text-align: center; color: #333; }
+        .pin-input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 20px; text-align: center; letter-spacing: 5px; margin: 15px 0; outline: none; }
+        .modal-btns { display: flex; gap: 10px; }
+        .modal-btn { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-cancel { background: #eee; color: #555; }
+        .btn-add { background: var(--p-green); color: white; }
+
+        /* Step 3: Real Chat Window */
+        #chat-window { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--wa-bg); z-index: 100; display: flex; flex-direction: column; color: #000; }
+        .chat-head { background: var(--p-green); color: white; padding: 10px; display: flex; align-items: center; gap: 10px; }
+        .msg-area { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
+        .bubble { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 15px; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.1); word-wrap: break-word; }
+        .sent { align-self: flex-end; background: #dcf8c6; border-top-right-radius: 0; }
+        .received { align-self: flex-start; background: #fff; border-top-left-radius: 0; }
+        .tick { font-size: 12px; color: #34b7f1; margin-left: 5px; }
+
+        .footer { background: #f0f0f0; padding: 10px; display: flex; align-items: center; gap: 10px; }
+        .footer input { flex: 1; padding: 12px; border-radius: 25px; border: none; outline: none; font-size: 16px; }
+        .send-btn { background: var(--s-green); color: white; border: none; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+        .add-float { position: fixed; bottom: 30px; right: 30px; background: var(--active); width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 35px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); cursor: pointer; color: white; }
+        .icon-svg { width: 24px; height: 24px; fill: white; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="setup-page">
+        <div class="profile-circle" onclick="document.getElementById('gallery').click()">
+            <img id="p-view" src="https://cdn-icons-png.flaticon.com/512/149/149071.png">
+        </div>
+        <input type="file" id="gallery" class="hidden" accept="image/*">
+        <input type="text" id="p-name" class="input-pro" placeholder="Enter Your Name">
+        <button class="btn-real" onclick="saveProfile()">ACTIVATE APP</button>
+    </div>
+
+    <div id="main-ui" class="hidden">
+        <header>
+            <div class="my-info">
+                <img id="my-pic" class="avatar-sm">
+                <div>
+                    <b id="my-name-display">User</b><br>
+                    <span class="pin-badge">PIN: <span id="my-pin-code">000000</span></span>
+                </div>
+            </div>
+            <div style="font-size: 20px; font-weight: bold;">Private SMS</div>
+        </header>
+        <div id="chat-list-area"></div>
+        <div class="add-float" onclick="toggleModal(true)">+</div>
+    </div>
+
+    <div id="pin-modal" class="hidden">
+        <div class="modal-content">
+            <h3>Add New Contact</h3>
+            <input type="number" id="pin-field" class="pin-input" placeholder="000000">
+            <div class="modal-btns">
+                <button class="modal-btn btn-cancel" onclick="toggleModal(false)">Cancel</button>
+                <button class="modal-btn btn-add" id="addBtn" onclick="confirmAddUser()">Add User</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="chat-window" class="hidden">
+        <div class="chat-head">
+            <span onclick="toggleChat(false)" style="font-size:30px; cursor:pointer;">←</span>
+            <img id="active-p" class="avatar-sm">
+            <div style="flex:1">
+                <b id="active-n">Name</b><br>
+                <small>online</small>
+            </div>
+            <div style="display:flex; gap:20px;">
+                <svg class="icon-svg" onclick="sendSignal('audio')" viewBox="0 0 24 24"><path d="M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z"/></svg>
+                <svg class="icon-svg" onclick="sendSignal('video')" viewBox="0 0 24 24"><path d="M17,10.5V7A1,1 0 0,0 16,6H4A1,1 0 0,0 3,7V17A1,1 0 0,0 4,18H16A1,1 0 0,0 17,17V13.5L21,17.5V6.5L17,10.5Z"/></svg>
+            </div>
+        </div>
+        <div class="msg-area" id="msg-container"></div>
+        <div class="footer">
+            <input type="text" id="m-input" placeholder="Type a message...">
+            <button class="send-btn" onclick="sendRealMsg()">
+                <svg style="width:24px;height:24px;fill:white" viewBox="0 0 24 24"><path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/></svg>
+            </button>
+        </div>
+    </div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxNwtfzHVQi9cdNq6Zh5F4m33nfxik7tv65qcGucJKm1taqCnMwuRkwWVDsJMyRqvR8/exec";
+    let myData = JSON.parse(localStorage.getItem('real_private_sms_v3')) || null;
+    let chatHistory = JSON.parse(localStorage.getItem('chat_history_v3')) || {};
+    let activeChatPin = null;
+
+    window.onload = () => { if(myData) launchApp(); };
+
+    document.getElementById('gallery').onchange = (e) => {
+        let r = new FileReader();
+        r.onload = () => document.getElementById('p-view').src = r.result;
+        r.readAsDataURL(e.target.files[0]);
+    };
+
+    async function saveProfile() {
+        let n = document.getElementById('p-name').value;
+        let p = document.getElementById('p-view').src;
+        if(!n) return alert("Name is required!");
+        let pin = Math.floor(100000 + Math.random() * 900000);
+        myData = { name: n, photo: p, pin: pin.toString(), contacts: [] };
+        localStorage.setItem('real_private_sms_v3', JSON.stringify(myData));
+        await fetch(`${SCRIPT_URL}?action=register&name=${encodeURIComponent(n)}&photo=${encodeURIComponent(p)}&pin=${pin}`);
+        launchApp();
+    }
+
+    function launchApp() {
+        document.getElementById('setup-page').classList.add('hidden');
+        document.getElementById('main-ui').classList.remove('hidden');
+        document.getElementById('my-name-display').innerText = myData.name;
+        document.getElementById('my-pic').src = myData.photo;
+        document.getElementById('my-pin-code').innerText = myData.pin;
+        renderList();
+        startSync();
+    }
+
+    function toggleModal(show) { document.getElementById('pin-modal').classList.toggle('hidden', !show); }
+
+    async function confirmAddUser() {
+        let p = document.getElementById('pin-field').value;
+        if(p === myData.pin) return alert("You cannot add yourself!");
+        document.getElementById('addBtn').innerText = "Searching...";
+        try {
+            const resp = await fetch(`${SCRIPT_URL}?action=getUser&pin=${p}`);
+            const user = await resp.json();
+            if(user && user.name) {
+                if(!myData.contacts.find(c => c.pin == p)) {
+                    myData.contacts.push({ name: user.name, pin: p, photo: user.photo });
+                    localStorage.setItem('real_private_sms_v3', JSON.stringify(myData));
+                    renderList();
+                }
+                toggleModal(false);
+            } else { alert("User not found!"); }
+        } catch(e) { alert("Error connecting to server."); }
+        document.getElementById('addBtn').innerText = "Add User";
+    }
+
+    function renderList() {
+        let area = document.getElementById('chat-list-area');
+        area.innerHTML = "";
+        myData.contacts.forEach(c => {
+            area.innerHTML += `<div class="chat-row" onclick="openRealChat('${c.name}','${c.photo}','${c.pin}')">
+                <img src="${c.photo}" class="avatar-sm">
+                <div class="chat-text"><b>${c.name}</b><p>PIN: ${c.pin}</p></div>
+            </div>`;
+        });
+    }
+
+    function openRealChat(n, p, pin) {
+        activeChatPin = pin;
+        document.getElementById('chat-window').classList.remove('hidden');
+        document.getElementById('active-n').innerText = n;
+        document.getElementById('active-p').src = p;
+        loadMessages(pin);
+    }
+
+    function loadMessages(pin) {
+        const container = document.getElementById('msg-container');
+        container.innerHTML = "";
+        (chatHistory[pin] || []).forEach(m => {
+            container.innerHTML += `<div class="bubble ${m.sender == myData.pin ? 'sent' : 'received'}">${m.text}${m.sender == myData.pin ? '<span class="tick">✓</span>' : ''}</div>`;
+        });
+        container.scrollTop = container.scrollHeight;
+    }
+
+    async function sendRealMsg() {
+        let txt = document.getElementById('m-input').value;
+        if(!txt || !activeChatPin) return;
+        const msgObj = { sender: myData.pin, text: txt, time: Date.now() };
+        if(!chatHistory[activeChatPin]) chatHistory[activeChatPin] = [];
+        chatHistory[activeChatPin].push(msgObj);
+        localStorage.setItem('chat_history_v3', JSON.stringify(chatHistory));
+        loadMessages(activeChatPin);
+        document.getElementById('m-input').value = "";
+        await fetch(`${SCRIPT_URL}?action=send&from=${myData.pin}&to=${activeChatPin}&msg=${encodeURIComponent(txt)}&type=chat`);
+    }
+
+    async function sendSignal(type) {
+        alert("Calling...");
+        await fetch(`${SCRIPT_URL}?action=send&from=${myData.pin}&to=${activeChatPin}&msg=${type}_call&type=signal`);
+    }
+
+    function startSync() {
+        setInterval(async () => {
+            try {
+                const resp = await fetch(`${SCRIPT_URL}?action=getMessages&myPin=${myData.pin}`);
+                const data = await resp.json();
+                if(data && data.length > 0) {
+                    data.forEach(m => {
+                        if(m.type === 'chat') {
+                            if(!chatHistory[m.sender]) chatHistory[m.sender] = [];
+                            chatHistory[m.sender].push({ sender: m.sender, text: m.text, time: Date.now() });
+                        } else if(m.type === 'signal') {
+                            alert("Incoming " + m.text);
+                        }
+                    });
+                    localStorage.setItem('chat_history_v3', JSON.stringify(chatHistory));
+                    if(activeChatPin) loadMessages(activeChatPin);
+                }
+            } catch(e) {}
+        }, 3000); 
+    }
+
+    function toggleChat(s) { if(!s) { document.getElementById('chat-window').classList.add('hidden'); activeChatPin = null; } }
+</script>
+</body>
+</html>
