@@ -3,48 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Private Elite v16</title>
+    <title>Private Elite v17</title>
     <style>
         :root { --wa-green: #00a884; --wa-bg: #0b141a; --wa-panel: #202c33; --wa-bubble-sent: #005c4b; --wa-bubble-recv: #202c33; --text: #e9edef; --wa-blue: #53bdeb; --icon: #aebac1; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--wa-bg); color: var(--text); height: 100vh; overflow: hidden; }
         .hidden { display: none !important; }
 
-        /* General UI */
+        /* General UI Styles */
         #setup-page, #main-ui { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px; background: #111b21; }
         .setup-input { background: #2a3942; border: 1px solid #3b4a54; padding: 18px; border-radius: 15px; color: #fff; width: 100%; max-width: 350px; margin-bottom: 20px; outline: none; text-align: center; font-size: 16px; }
 
-        /* Chat Window */
+        /* Chat Layout */
         #chat-window { position: fixed; inset: 0; background: #0b141a; z-index: 2000; display: flex; flex-direction: column; }
         .chat-header { background: var(--wa-panel); padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 65px; border-bottom: 1px solid #2a3942; }
-        .user-img { width: 42px; height: 42px; border-radius: 50%; background: #6a7175; overflow: hidden; }
-        .header-info { flex: 1; }
-        .header-info b { font-size: 17px; display: block; }
-        .header-info span { font-size: 12px; color: var(--wa-green); }
+        .user-img { width: 42px; height: 42px; border-radius: 50%; background: #6a7175; overflow: hidden; object-fit: cover; }
         .header-icons { display: flex; gap: 22px; }
-        
-        /* Messages */
         .message-area { flex: 1; padding: 20px; overflow-y: auto; background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-color: #0b141a; background-blend-mode: overlay; display: flex; flex-direction: column; gap: 8px; }
+        
+        /* Message Bubbles */
         .msg { max-width: 80%; padding: 8px 12px; border-radius: 10px; font-size: 15px; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.5); }
         .sent { align-self: flex-end; background: var(--wa-bubble-sent); border-top-right-radius: 0; }
         .recv { align-self: flex-start; background: var(--wa-bubble-recv); border-top-left-radius: 0; }
         .shared-img { width: 100%; max-width: 250px; border-radius: 8px; margin-top: 5px; cursor: pointer; }
+
+        /* Calling Interface */
+        #call-overlay { position: fixed; inset: 0; background: #111b21; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; }
+        #local-video { width: 100px; height: 150px; background: #000; position: absolute; top: 20px; right: 20px; border-radius: 8px; border: 2px solid var(--wa-green); z-index: 3001; }
+        #remote-video { width: 100%; height: 100%; background: #1c2a33; object-fit: cover; }
+        .call-controls { position: absolute; bottom: 50px; display: flex; gap: 30px; }
+        .call-btn { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .hangup { background: #ff3b30; }
 
         /* Footer */
         .footer { background: var(--wa-panel); padding: 10px 15px; display: flex; align-items: center; gap: 10px; }
         .input-container { flex: 1; background: #2a3942; border-radius: 25px; padding: 5px 15px; display: flex; align-items: center; gap: 12px; }
         .input-container input { flex: 1; background: transparent; border: none; padding: 10px 0; color: #fff; outline: none; font-size: 16px; }
         .icon-btn { cursor: pointer; fill: var(--icon); }
-
-        /* Call Overlay */
-        #call-overlay { position: fixed; inset: 0; background: #111b21; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .call-btn-red { background: #ff3b30; width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: 50px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="setup-page">
-        <h1 style="color:var(--wa-green); margin-bottom:10px;">Private Elite v16</h1>
+        <h1 style="color:var(--wa-green); margin-bottom:10px;">Private Elite v17</h1>
         <input type="text" id="user-name" class="setup-input" placeholder="Your Name">
         <button class="setup-input" style="background:var(--wa-green); color:#111; font-weight:bold; border:none;" onclick="startApp()">ACTIVATE</button>
     </div>
@@ -61,13 +62,13 @@
         <div class="chat-header">
             <div onclick="closeChat()" style="cursor:pointer; font-size:24px;">←</div>
             <div class="user-img" style="width:38px; height:38px;"></div>
-            <div class="header-info">
+            <div class="header-info" style="flex:1">
                 <b id="act-n">Friend</b>
                 <span id="typing-status">online</span>
             </div>
             <div class="header-icons">
-                <svg class="icon-btn" onclick="triggerCall('Video')" width="24" height="24" viewBox="0 0 24 24"><path d="M18 7c0-1.103-.897-2-2-2H4c-1.103 0-2 .897-2 2v10c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-3.333L22 17V7l-4 3.333V7z"></path></svg>
-                <svg class="icon-btn" onclick="triggerCall('Voice')" width="24" height="24" viewBox="0 0 24 24"><path d="M17.707 12.293a.999.999 0 00-1.414 0l-1.594 1.594c-.739-.22-2.118-.72-2.992-1.594s-1.374-2.253-1.594-2.992l1.594-1.594a.999.999 0 000-1.414l-4-4a.999.999 0 00-1.414 0L3.581 5.019c-.328.328-.523.774-.557 1.241-.136 2.391.803 5.4 3.013 7.61s5.219 3.149 7.61 3.013c.467-.034.913-.229 1.241-.557l2.819-2.819a.999.999 0 000-1.414l-4-4z"></path></svg>
+                <svg class="icon-btn" onclick="initiateCall('Video')" width="24" height="24" viewBox="0 0 24 24"><path d="M18 7c0-1.103-.897-2-2-2H4c-1.103 0-2 .897-2 2v10c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-3.333L22 17V7l-4 3.333V7z"></path></svg>
+                <svg class="icon-btn" onclick="initiateCall('Voice')" width="24" height="24" viewBox="0 0 24 24"><path d="M17.707 12.293a.999.999 0 00-1.414 0l-1.594 1.594c-.739-.22-2.118-.72-2.992-1.594s-1.374-2.253-1.594-2.992l1.594-1.594a.999.999 0 000-1.414l-4-4a.999.999 0 00-1.414 0L3.581 5.019c-.328.328-.523.774-.557 1.241-.136 2.391.803 5.4 3.013 7.61s5.219 3.149 7.61 3.013c.467-.034.913-.229 1.241-.557l2.819-2.819a.999.999 0 000-1.414l-4-4z"></path></svg>
             </div>
         </div>
         <div class="message-area" id="msgs"></div>
@@ -84,24 +85,25 @@
     </div>
 
     <div id="call-overlay" class="hidden">
-        <div class="user-img" style="width:100px; height:100px; margin-bottom:20px;"></div>
-        <h2 id="call-user">Friend</h2>
-        <p id="call-status" style="color:var(--wa-green);">Ringing...</p>
-        <div class="call-btn-red" onclick="endCall()">
-            <svg fill="#fff" width="30" height="30" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+        <video id="remote-video" autoplay playsinline></video>
+        <video id="local-video" autoplay playsinline muted></video>
+        <div style="position:absolute; top:200px;">
+            <h2 id="call-user-name">Friend</h2>
+            <p id="call-type-status">Calling...</p>
+        </div>
+        <div class="call-controls">
+            <div class="call-btn hangup" onclick="endCall()">
+                <svg fill="#fff" width="30" height="30" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            </div>
         </div>
     </div>
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4aeKaJI5X3Y9a4MSvc-UfEkvnilBHtxCVCoxDPhOH4XhTJY155HwWdVVkZJguTEiU/exec";
-    let db = JSON.parse(localStorage.getItem('psms_v16_db')) || null;
-    let chats = JSON.parse(localStorage.getItem('psms_v16_chats')) || {};
+    let db = JSON.parse(localStorage.getItem('psms_v17_db')) || null;
+    let chats = JSON.parse(localStorage.getItem('psms_v17_chats')) || {};
     let activePin = null;
-
-    // Notification Permission Request
-    if ("Notification" in window) {
-        Notification.requestPermission();
-    }
+    let localStream = null;
 
     window.onload = () => { if(db) launch(); };
 
@@ -110,7 +112,7 @@
         if(!n) return;
         let p = Math.floor(100000 + Math.random() * 900000).toString();
         db = { name: n, pin: p };
-        localStorage.setItem('psms_v16_db', JSON.stringify(db));
+        localStorage.setItem('psms_v17_db', JSON.stringify(db));
         callServer(`action=register&name=${encodeURIComponent(n)}&pin=${p}`);
         launch();
     }
@@ -162,10 +164,9 @@
         if(!t) return;
         if(!chats[activePin]) chats[activePin] = [];
         chats[activePin].push({ s: db.pin, t: t, type: type });
-        localStorage.setItem('psms_v16_chats', JSON.stringify(chats));
+        localStorage.setItem('psms_v17_chats', JSON.stringify(chats));
         showMsgs();
         document.getElementById('m-in').value = "";
-        // Large Image Compression logic would go here, using base64 for now
         callServer(`action=send&from=${db.pin}&to=${activePin}&msg=${encodeURIComponent(t)}`);
     }
 
@@ -177,14 +178,37 @@
         }
     }
 
-    function triggerCall(type) {
+    // REAL CALLING LOGIC
+    async function initiateCall(type) {
         document.getElementById('call-overlay').classList.remove('hidden');
-        document.getElementById('call-user').innerText = document.getElementById('act-n').innerText;
-        document.getElementById('call-status').innerText = `${type} calling...`;
-        sendMsg(`[CALL_REQUEST:${type}]`, 'system'); // Send call signal to friend
+        document.getElementById('call-user-name').innerText = document.getElementById('act-n').innerText;
+        document.getElementById('call-type-status').innerText = `Ringing (${type})...`;
+        
+        try {
+            const constraints = {
+                video: type === 'Video',
+                audio: true
+            };
+            localStream = await navigator.mediaDevices.getUserMedia(constraints);
+            document.getElementById('local-video').srcObject = localStream;
+            
+            if(type === 'Voice') document.getElementById('local-video').classList.add('hidden');
+            else document.getElementById('local-video').classList.remove('hidden');
+
+            sendMsg(`[CALL_SIGNAL:${type}]`, 'system');
+        } catch (err) {
+            alert("Camera/Mic access denied!");
+            endCall();
+        }
     }
 
-    function endCall() { document.getElementById('call-overlay').classList.add('hidden'); }
+    function endCall() {
+        if(localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+        }
+        document.getElementById('call-overlay').classList.add('hidden');
+        document.getElementById('local-video').srcObject = null;
+    }
 
     function sync() { callServer(`action=getMessages&myPin=${db.pin}`, "handleSync"); }
 
@@ -195,23 +219,18 @@
                 if(!chats[m.sender].some(x => x.t === m.text)) {
                     let type = m.text.startsWith('data:image') ? 'img' : 'text';
                     chats[m.sender].push({ s: m.sender, t: m.text, type: type });
-                    
-                    // Trigger Call Screen if signal received
-                    if(m.text.includes("[CALL_REQUEST:")) {
-                        triggerCall(m.text.split(":")[1].replace("]", ""));
+
+                    if(m.text.includes("[CALL_SIGNAL:")) {
+                        let callType = m.text.includes("Video") ? "Video" : "Voice";
+                        initiateCall(callType); // Auto-answer simulation
                     }
 
-                    // NOTIFICATION LOGIC
-                    if (Notification.permission === "granted") {
-                        let n = new Notification(m.sender_name || "New Message", {
-                            body: type === 'img' ? "Sent a photo" : m.text,
-                            icon: 'https://cdn-icons-png.flaticon.com/512/733/733585.png'
-                        });
-                        n.onclick = () => { window.focus(); openChat(m.sender_name, m.sender); };
+                    if (document.hidden && Notification.permission === "granted") {
+                        new Notification(m.sender_name || "New Message", { body: type === 'img' ? "Photo" : m.text });
                     }
                 }
             });
-            localStorage.setItem('psms_v16_chats', JSON.stringify(chats));
+            localStorage.setItem('psms_v17_chats', JSON.stringify(chats));
             if(activePin) showMsgs();
         }
     };
