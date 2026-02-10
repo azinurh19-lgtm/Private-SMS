@@ -12,7 +12,7 @@
 
         /* Animations */
         @keyframes pulse-ring { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 168, 132, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 168, 132, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 168, 132, 0); } }
-        .active-load { animation: pulse-ring 2s infinite; pointer-events: none; background: #3b4a54 !important; }
+        .active-load { animation: pulse-ring 2s infinite; pointer-events: none; opacity: 0.8; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
         #setup-page, #main-ui { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px; background: #111b21; }
@@ -33,14 +33,14 @@
         #remote-video { width: 100%; height: 100%; background: #000; object-fit: cover; }
         #local-video { width: 100px; height: 150px; background: #222; position: absolute; top: 20px; right: 20px; border-radius: 8px; border: 2px solid var(--wa-green); z-index: 3001; }
         .call-controls { position: absolute; bottom: 50px; display: flex; gap: 40px; z-index: 3005; }
-        .call-btn { width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+        .call-btn { width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .hangup { background: #ff3b30; }
         .answer { background: #00a884; }
 
         .footer { background: var(--wa-panel); padding: 10px 15px; display: flex; align-items: center; gap: 10px; }
         .input-container { flex: 1; background: #2a3942; border-radius: 25px; padding: 5px 15px; display: flex; align-items: center; gap: 12px; }
         .input-container input { flex: 1; background: transparent; border: none; padding: 10px 0; color: #fff; outline: none; font-size: 16px; }
-        .icon-btn { cursor: pointer; fill: var(--icon); }
+        .icon-btn { cursor: pointer; fill: var(--icon); transition: 0.2s; }
     </style>
 </head>
 <body>
@@ -94,7 +94,7 @@
         <div style="position:absolute; top:120px; width:100%;">
             <div style="width:100px; height:100px; background:#555; border-radius:50%; margin:0 auto 20px;"></div>
             <h2 id="call-user-display" style="font-size:32px;">Friend</h2>
-            <p id="call-status-text" style="color:var(--wa-green); font-size:18px;">Calling...</p>
+            <p id="call-status-text" style="color:var(--wa-green); font-size:18px; margin-top:10px;">Calling...</p>
         </div>
         <div class="call-controls">
             <div id="ans-btn" class="call-btn answer hidden" onclick="acceptCall()">
@@ -113,19 +113,18 @@
     let activePin = localStorage.getItem('psms_v18_activePin') || null;
     let localStream = null;
     let callType = null;
-    let lastProcessed = 0;
+    let processedMsgs = new Set(); // To prevent duplicate alerts
 
     window.onload = () => { 
         if(db) launch(); 
-        if("Notification" in window) {
-            Notification.requestPermission();
-        }
+        if("Notification" in window) Notification.requestPermission();
     };
 
     function playSound(id) { 
         const a = document.getElementById(id);
         if(a) { a.currentTime = 0; a.play().catch(()=>{}); }
     }
+
     function stopSound(id) {
         const a = document.getElementById(id);
         if(a) { a.pause(); a.currentTime = 0; }
@@ -146,7 +145,7 @@
         document.getElementById('main-ui').classList.remove('hidden');
         document.getElementById('my-n').innerText = db.name;
         document.getElementById('my-pin').innerText = db.pin;
-        setInterval(sync, 2000);
+        setInterval(sync, 2000); // 2-second heartbeat for unlimited sync
     }
 
     function callServer(params, callback) {
@@ -154,6 +153,7 @@
         s.src = `${SCRIPT_URL}?${params}&_t=${Date.now()}${callback ? '&callback='+callback : ''}`;
         document.body.appendChild(s);
         s.onload = () => s.remove();
+        s.onerror = () => s.remove();
     }
 
     function validatePin() {
@@ -172,12 +172,13 @@
             activePin = user.pin;
             localStorage.setItem('psms_v18_activePin', user.pin);
             openChat(user.name, user.pin);
-        } else alert("Invalid PIN!");
+            // Trigger B-side handshake by sending a ghost message
+            callServer(`action=send&from=${db.pin}&to=${activePin}&msg=[HANDSHAKE]`);
+        } else alert("PIN not found!");
     }
 
     function openChat(n, pin) {
         activePin = pin;
-        localStorage.setItem('psms_v18_activePin', pin);
         document.getElementById('chat-window').classList.remove('hidden');
         document.getElementById('act-n').innerText = n;
         showMsgs();
@@ -187,7 +188,7 @@
         if(!activePin) return;
         const box = document.getElementById('msgs'); box.innerHTML = "";
         (chats[activePin] || []).forEach(m => {
-            if(m.type === 'system') return;
+            if(m.type === 'system' || m.t === '[HANDSHAKE]') return;
             const isImg = (m.t && m.t.startsWith('data:image'));
             const content = isImg ? `<img src="${m.t}" class="shared-img" onclick="window.open(this.src)">` : m.t;
             box.innerHTML += `<div class="msg ${m.s == db.pin ? 'sent' : 'recv'}">${content}</div>`;
@@ -199,9 +200,11 @@
         let t = val || document.getElementById('m-in').value;
         if(!t || !activePin) return;
         if(!chats[activePin]) chats[activePin] = [];
-        chats[activePin].push({ s: db.pin, t: t, type: type });
-        localStorage.setItem('psms_v18_chats', JSON.stringify(chats));
-        showMsgs();
+        if(t !== '[HANDSHAKE]') {
+            chats[activePin].push({ s: db.pin, t: t, type: type });
+            localStorage.setItem('psms_v18_chats', JSON.stringify(chats));
+            showMsgs();
+        }
         document.getElementById('m-in').value = "";
         callServer(`action=send&from=${db.pin}&to=${activePin}&msg=${encodeURIComponent(t)}`);
     }
@@ -218,8 +221,8 @@
         callType = type;
         document.getElementById('call-overlay').classList.remove('hidden');
         document.getElementById('ans-btn').classList.add('hidden');
-        document.getElementById('call-status-text').innerText = `Calling (${type})...`;
         document.getElementById('call-user-display').innerText = document.getElementById('act-n').innerText;
+        document.getElementById('call-status-text').innerText = `Calling...`;
         playSound('snd-ring');
         await startMedia(type);
         sendMsg(`[CALL_REQ:${type}]`, 'system');
@@ -231,7 +234,7 @@
             localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'Video', audio: true });
             document.getElementById('local-video').srcObject = localStream;
             document.getElementById('local-video').classList.toggle('hidden', type === 'Voice');
-        } catch (e) { alert("Mic/Camera Denied"); endCall(); }
+        } catch (e) { alert("Access Denied"); endCall(); }
     }
 
     function acceptCall() {
@@ -258,14 +261,19 @@
         if(data && data.length > 0) {
             data.forEach(m => {
                 let msgId = m.sender + m.text;
-                if(!chats[m.sender]) chats[m.sender] = [];
-                if(!chats[m.sender].some(x => (x.s + x.t) === msgId)) {
+                if(!processedMsgs.has(msgId)) {
+                    processedMsgs.add(msgId);
                     
+                    if(!chats[m.sender]) chats[m.sender] = [];
                     let isCallReq = m.text.includes("[CALL_REQ:");
-                    let isImg = m.text.startsWith('data:image');
-                    chats[m.sender].push({ s: m.sender, t: m.text, type: isCallReq ? 'system' : (isImg ? 'img' : 'text') });
+                    let isHandshake = m.text === '[HANDSHAKE]';
 
-                    // CRITICAL: Update activePin for TWO-WAY talk
+                    // Save message if it's not a control signal
+                    if(!isHandshake && !isCallReq && m.text !== "[CALL_END]") {
+                        chats[m.sender].push({ s: m.sender, t: m.text, type: m.text.startsWith('data:image') ? 'img' : 'text' });
+                    }
+
+                    // Auto-Connect both sides
                     activePin = m.sender;
                     localStorage.setItem('psms_v18_activePin', m.sender);
 
@@ -274,19 +282,16 @@
                         document.getElementById('call-overlay').classList.remove('hidden');
                         document.getElementById('ans-btn').classList.remove('hidden');
                         document.getElementById('call-user-display').innerText = m.sender_name;
-                        document.getElementById('call-status-text').innerText = `Incoming ${callType}...`;
+                        document.getElementById('call-status-text').innerText = `Incoming ${callType} Call...`;
                         playSound('snd-ring');
                     } else if(m.text === "[CALL_END]") {
                         endCall();
-                    } else {
+                    } else if(!isHandshake) {
+                        // Regular msg or image notification
                         playSound('snd-msg');
                         openChat(m.sender_name, m.sender);
-                        // Offline Notification System
-                        if (Notification.permission === "granted" && document.hidden) {
-                            new Notification(m.sender_name, { 
-                                body: isImg ? "📷 Image" : m.text,
-                                icon: 'https://cdn-icons-png.flaticon.com/512/134/134914.png'
-                            });
+                        if (Notification.permission === "granted") {
+                            new Notification(m.sender_name, { body: m.text.startsWith('data:image') ? "Sent a photo" : m.text });
                         }
                     }
                 }
