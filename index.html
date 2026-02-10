@@ -10,24 +10,20 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--wa-bg); color: var(--text); height: 100vh; overflow: hidden; }
         .hidden { display: none !important; }
 
-        /* Setup & Main UI */
         #setup-page, #main-ui { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px; background: #111b21; }
         .setup-input { background: #2a3942; border: 1px solid #3b4a54; padding: 18px; border-radius: 15px; color: #fff; width: 100%; max-width: 350px; margin-bottom: 20px; outline: none; text-align: center; font-size: 16px; }
 
-        /* Chat Layout */
         #chat-window { position: fixed; inset: 0; background: #0b141a; z-index: 2000; display: flex; flex-direction: column; }
         .chat-header { background: var(--wa-panel); padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 65px; border-bottom: 1px solid #2a3942; }
         .user-img { width: 42px; height: 42px; border-radius: 50%; background: #6a7175; overflow: hidden; object-fit: cover; }
         .header-icons { display: flex; gap: 22px; }
         .message-area { flex: 1; padding: 20px; overflow-y: auto; background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-color: #0b141a; background-blend-mode: overlay; display: flex; flex-direction: column; gap: 8px; }
         
-        /* Bubbles */
         .msg { max-width: 80%; padding: 8px 12px; border-radius: 10px; font-size: 15px; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.5); word-wrap: break-word; }
         .sent { align-self: flex-end; background: var(--wa-bubble-sent); border-top-right-radius: 0; }
         .recv { align-self: flex-start; background: var(--wa-bubble-recv); border-top-left-radius: 0; }
         .shared-img { width: 100%; max-width: 250px; border-radius: 8px; margin-top: 5px; cursor: pointer; display: block; }
 
-        /* Call Overlay */
         #call-overlay { position: fixed; inset: 0; background: #111b21; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; }
         #remote-video { width: 100%; height: 100%; background: #1c2a33; object-fit: cover; }
         #local-video { width: 100px; height: 150px; background: #000; position: absolute; top: 20px; right: 20px; border-radius: 8px; border: 2px solid var(--wa-green); z-index: 3001; }
@@ -36,7 +32,6 @@
         .hangup { background: #ff3b30; }
         .answer { background: #00a884; }
 
-        /* Footer */
         .footer { background: var(--wa-panel); padding: 10px 15px; display: flex; align-items: center; gap: 10px; }
         .input-container { flex: 1; background: #2a3942; border-radius: 25px; padding: 5px 15px; display: flex; align-items: center; gap: 12px; }
         .input-container input { flex: 1; background: transparent; border: none; padding: 10px 0; color: #fff; outline: none; font-size: 16px; }
@@ -161,8 +156,7 @@
         if(!activePin) return;
         const box = document.getElementById('msgs'); box.innerHTML = "";
         (chats[activePin] || []).forEach(m => {
-            // Photo detection improved
-            const isImg = (m.t && m.t.startsWith('data:image')) || m.type === 'img';
+            const isImg = (typeof m.t === 'string' && m.t.startsWith('data:image'));
             const content = isImg ? `<img src="${m.t}" class="shared-img" onclick="window.open(this.src)">` : m.t;
             box.innerHTML += `<div class="msg ${m.s == db.pin ? 'sent' : 'recv'}">${content}</div>`;
         });
@@ -204,15 +198,13 @@
             document.getElementById('local-video').srcObject = localStream;
             if(type === 'Voice') document.getElementById('local-video').classList.add('hidden');
             else document.getElementById('local-video').classList.remove('hidden');
-        } catch (e) { alert("Mic/Camera Denied"); endCall(); }
+        } catch (e) { alert("Access Denied"); endCall(); }
     }
 
     function acceptCall() {
         document.getElementById('ans-btn').classList.add('hidden');
         document.getElementById('call-status-text').innerText = "Connected";
         startMedia(currentCallType).then(() => {
-            // In a real WebRTC this would be different, 
-            // but here we mirror local stream to show connection
             document.getElementById('remote-video').srcObject = localStream; 
         });
     }
@@ -223,7 +215,9 @@
         sendMsg("[CALL_END]", 'system');
     }
 
-    function sync() { callServer(`action=getMessages&myPin=${db.pin}`, "handleSync"); }
+    function sync() { 
+        if(db && db.pin) callServer(`action=getMessages&myPin=${db.pin}`, "handleSync"); 
+    }
 
     window.handleSync = (data) => {
         if(data && data.length > 0) {
@@ -234,24 +228,23 @@
                     let isCallReq = m.text.includes("[CALL_REQ:");
                     let isImg = m.text.startsWith('data:image');
 
-                    // Save message
+                    // Step 1: Push data
                     chats[m.sender].push({ s: m.sender, t: m.text, type: isImg ? 'img' : (isCallReq ? 'system' : 'text') });
                     
-                    // AUTO-RECEIVE: Agar receiver ne chat nahi khola, toh auto-open kare
-                    if(!activePin || activePin !== m.sender) {
+                    // Step 2: Auto-Set Active Pin for both phones
+                    if(!activePin) {
                         activePin = m.sender;
-                        document.getElementById('chat-window').classList.remove('hidden');
-                        document.getElementById('act-n').innerText = m.sender_name || "New Message";
+                        document.getElementById('act-n').innerText = m.sender_name || "Friend";
                     }
 
-                    // NOTIFICATIONS
+                    // Step 3: Global Notification Logic
                     if (Notification.permission === "granted") {
                         let msgBody = isImg ? "📷 Shared a Photo" : (isCallReq ? "📞 Incoming Call" : m.text);
                         let n = new Notification(m.sender_name || "Private Elite", { body: msgBody });
-                        n.onclick = () => { window.focus(); };
+                        n.onclick = () => { window.focus(); openChat(m.sender_name, m.sender); };
                     }
 
-                    // CALL UI HANDLING
+                    // Step 4: UI Triggers
                     if(isCallReq) {
                         currentCallType = m.text.includes("Video") ? "Video" : "Voice";
                         document.getElementById('call-overlay').classList.remove('hidden');
@@ -259,14 +252,14 @@
                         document.getElementById('call-user-display').innerText = m.sender_name;
                         document.getElementById('call-status-text').innerText = `Incoming ${currentCallType} Call...`;
                     }
-                    if(m.text === "[CALL_END]") {
-                        if(localStream) localStream.getTracks().forEach(t => t.stop());
-                        document.getElementById('call-overlay').classList.add('hidden');
-                    }
+                    if(m.text === "[CALL_END]") endCall();
                 }
             });
             localStorage.setItem('psms_v18_chats', JSON.stringify(chats));
-            showMsgs();
+            if(activePin) {
+                document.getElementById('chat-window').classList.remove('hidden');
+                showMsgs();
+            }
         }
     };
 
