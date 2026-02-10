@@ -10,8 +10,12 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--wa-bg); color: var(--text); height: 100vh; overflow: hidden; }
         .hidden { display: none !important; }
 
+        /* Animations */
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .connecting { animation: pulse 1s infinite; pointer-events: none; background: #3b4a54 !important; }
+
         #setup-page, #main-ui { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px; background: #111b21; }
-        .setup-input { background: #2a3942; border: 1px solid #3b4a54; padding: 18px; border-radius: 15px; color: #fff; width: 100%; max-width: 350px; margin-bottom: 20px; outline: none; text-align: center; font-size: 16px; }
+        .setup-input { background: #2a3942; border: 1px solid #3b4a54; padding: 18px; border-radius: 15px; color: #fff; width: 100%; max-width: 350px; margin-bottom: 20px; outline: none; text-align: center; font-size: 16px; transition: 0.3s; }
 
         #chat-window { position: fixed; inset: 0; background: #0b141a; z-index: 2000; display: flex; flex-direction: column; }
         .chat-header { background: var(--wa-panel); padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 65px; border-bottom: 1px solid #2a3942; }
@@ -51,7 +55,7 @@
         <h2 id="my-n">User</h2>
         <p style="color:var(--wa-green); margin-bottom:25px;">PIN: <b id="my-pin">000000</b></p>
         <input type="number" id="target-pin" class="setup-input" placeholder="Friend's PIN">
-        <button class="setup-input" style="background:var(--wa-green); color:#111; font-weight:bold; border:none;" onclick="validatePin()">CONNECT</button>
+        <button id="conn-btn" class="setup-input" style="background:var(--wa-green); color:#111; font-weight:bold; border:none;" onclick="validatePin()">CONNECT</button>
     </div>
 
     <div id="chat-window" class="hidden">
@@ -74,8 +78,8 @@
                 <input type="text" id="m-in" placeholder="Type message">
                 <input type="file" id="file-in" accept="image/*" class="hidden" onchange="handleFile(this)">
             </div>
-            <button class="btn-send" onclick="sendMsg()">
-                <svg width="24" height="24" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="#111b21"></path></svg>
+            <button class="btn-send" onclick="sendMsg()" style="background:transparent; border:none; cursor:pointer;">
+                <svg width="24" height="24" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="#00a884"></path></svg>
             </button>
         </div>
     </div>
@@ -103,12 +107,8 @@
     let chats = JSON.parse(localStorage.getItem('psms_v18_chats')) || {};
     let activePin = localStorage.getItem('psms_v18_activePin') || null;
     let localStream = null;
-    let currentCallType = null;
 
-    window.onload = () => { 
-        if(db) launch(); 
-        if("Notification" in window) Notification.requestPermission();
-    };
+    window.onload = () => { if(db) launch(); };
 
     function startApp() {
         let n = document.getElementById('user-name').value;
@@ -136,12 +136,19 @@
     }
 
     function validatePin() {
+        const btn = document.getElementById('conn-btn');
+        btn.innerText = "CONNECTING...";
+        btn.classList.add('connecting');
         let pin = document.getElementById('target-pin').value;
         callServer(`action=getUser&pin=${pin}`, "handleSearch");
     }
 
     window.handleSearch = (user) => {
+        const btn = document.getElementById('conn-btn');
+        btn.innerText = "CONNECT";
+        btn.classList.remove('connecting');
         if(user && user.name) {
+            activePin = user.pin;
             localStorage.setItem('psms_v18_activePin', user.pin);
             openChat(user.name, user.pin);
         } else alert("PIN not found!");
@@ -158,7 +165,8 @@
         if(!activePin) return;
         const box = document.getElementById('msgs'); box.innerHTML = "";
         (chats[activePin] || []).forEach(m => {
-            const isImg = (typeof m.t === 'string' && m.t.startsWith('data:image'));
+            if(m.type === 'system') return;
+            const isImg = (m.t && m.t.startsWith('data:image'));
             const content = isImg ? `<img src="${m.t}" class="shared-img" onclick="window.open(this.src)">` : m.t;
             box.innerHTML += `<div class="msg ${m.s == db.pin ? 'sent' : 'recv'}">${content}</div>`;
         });
@@ -185,7 +193,6 @@
     }
 
     async function initiateCall(type) {
-        currentCallType = type;
         document.getElementById('call-overlay').classList.remove('hidden');
         document.getElementById('ans-btn').classList.add('hidden');
         document.getElementById('call-user-display').innerText = document.getElementById('act-n').innerText;
@@ -196,18 +203,20 @@
 
     async function startMedia(type) {
         try {
-            localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'Video', audio: true });
+            const constraints = { video: type === 'Video', audio: true };
+            localStream = await navigator.mediaDevices.getUserMedia(constraints);
             document.getElementById('local-video').srcObject = localStream;
             if(type === 'Voice') document.getElementById('local-video').classList.add('hidden');
             else document.getElementById('local-video').classList.remove('hidden');
-        } catch (e) { alert("Access Denied"); endCall(); }
+        } catch (e) { alert("Camera/Mic Error"); endCall(); }
     }
 
     function acceptCall() {
         document.getElementById('ans-btn').classList.add('hidden');
         document.getElementById('call-status-text').innerText = "Connected";
-        startMedia(currentCallType).then(() => {
-            document.getElementById('remote-video').srcObject = localStream; 
+        const type = document.getElementById('call-status-text').dataset.type || 'Video';
+        startMedia(type).then(() => {
+            document.getElementById('remote-video').srcObject = localStream;
         });
     }
 
@@ -217,43 +226,33 @@
         sendMsg("[CALL_END]", 'system');
     }
 
-    function sync() { 
-        if(db && db.pin) callServer(`action=getMessages&myPin=${db.pin}`, "handleSync"); 
-    }
+    function sync() { if(db) callServer(`action=getMessages&myPin=${db.pin}`, "handleSync"); }
 
     window.handleSync = (data) => {
         if(data && data.length > 0) {
             data.forEach(m => {
                 if(!chats[m.sender]) chats[m.sender] = [];
                 if(!chats[m.sender].some(x => x.t === m.text)) {
-                    
                     let isCallReq = m.text.includes("[CALL_REQ:");
                     let isImg = m.text.startsWith('data:image');
-
-                    chats[m.sender].push({ s: m.sender, t: m.text, type: isImg ? 'img' : (isCallReq ? 'system' : 'text') });
                     
-                    // CRITICAL FIX: Link the sender as activePin for B-to-A communication
-                    if(!activePin || activePin !== m.sender) {
-                        activePin = m.sender;
-                        localStorage.setItem('psms_v18_activePin', m.sender);
-                        document.getElementById('act-n').innerText = m.sender_name || "Friend";
-                        document.getElementById('chat-window').classList.remove('hidden');
-                    }
-
-                    if (Notification.permission === "granted") {
-                        let msgBody = isImg ? "📷 Shared a Photo" : (isCallReq ? "📞 Incoming Call" : m.text);
-                        let n = new Notification(m.sender_name || "Private Elite", { body: msgBody });
-                        n.onclick = () => { window.focus(); openChat(m.sender_name, m.sender); };
-                    }
+                    chats[m.sender].push({ s: m.sender, t: m.text, type: isImg ? 'img' : (isCallReq ? 'system' : 'text') });
+                    activePin = m.sender; 
+                    localStorage.setItem('psms_v18_activePin', m.sender);
 
                     if(isCallReq) {
-                        currentCallType = m.text.includes("Video") ? "Video" : "Voice";
+                        let type = m.text.includes("Video") ? "Video" : "Voice";
+                        document.getElementById('call-status-text').dataset.type = type;
                         document.getElementById('call-overlay').classList.remove('hidden');
                         document.getElementById('ans-btn').classList.remove('hidden');
                         document.getElementById('call-user-display').innerText = m.sender_name;
-                        document.getElementById('call-status-text').innerText = `Incoming ${currentCallType} Call...`;
+                        document.getElementById('call-status-text').innerText = `Incoming ${type} Call...`;
+                    } else if(m.text === "[CALL_END]") {
+                        endCall();
+                    } else {
+                        // Agar message ya photo hai toh hi chat screen khulegi
+                        openChat(m.sender_name, m.sender);
                     }
-                    if(m.text === "[CALL_END]") endCall();
                 }
             });
             localStorage.setItem('psms_v18_chats', JSON.stringify(chats));
