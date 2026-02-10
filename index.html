@@ -101,7 +101,7 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4aeKaJI5X3Y9a4MSvc-UfEkvnilBHtxCVCoxDPhOH4XhTJY155HwWdVVkZJguTEiU/exec";
     let db = JSON.parse(localStorage.getItem('psms_v18_db')) || null;
     let chats = JSON.parse(localStorage.getItem('psms_v18_chats')) || {};
-    let activePin = null;
+    let activePin = localStorage.getItem('psms_v18_activePin') || null;
     let localStream = null;
     let currentCallType = null;
 
@@ -141,8 +141,10 @@
     }
 
     window.handleSearch = (user) => {
-        if(user && user.name) openChat(user.name, user.pin);
-        else alert("PIN not found!");
+        if(user && user.name) {
+            localStorage.setItem('psms_v18_activePin', user.pin);
+            openChat(user.name, user.pin);
+        } else alert("PIN not found!");
     }
 
     function openChat(n, pin) {
@@ -228,23 +230,22 @@
                     let isCallReq = m.text.includes("[CALL_REQ:");
                     let isImg = m.text.startsWith('data:image');
 
-                    // Step 1: Push data
                     chats[m.sender].push({ s: m.sender, t: m.text, type: isImg ? 'img' : (isCallReq ? 'system' : 'text') });
                     
-                    // Step 2: Auto-Set Active Pin for both phones
-                    if(!activePin) {
+                    // CRITICAL FIX: Link the sender as activePin for B-to-A communication
+                    if(!activePin || activePin !== m.sender) {
                         activePin = m.sender;
+                        localStorage.setItem('psms_v18_activePin', m.sender);
                         document.getElementById('act-n').innerText = m.sender_name || "Friend";
+                        document.getElementById('chat-window').classList.remove('hidden');
                     }
 
-                    // Step 3: Global Notification Logic
                     if (Notification.permission === "granted") {
                         let msgBody = isImg ? "📷 Shared a Photo" : (isCallReq ? "📞 Incoming Call" : m.text);
                         let n = new Notification(m.sender_name || "Private Elite", { body: msgBody });
                         n.onclick = () => { window.focus(); openChat(m.sender_name, m.sender); };
                     }
 
-                    // Step 4: UI Triggers
                     if(isCallReq) {
                         currentCallType = m.text.includes("Video") ? "Video" : "Voice";
                         document.getElementById('call-overlay').classList.remove('hidden');
@@ -256,14 +257,11 @@
                 }
             });
             localStorage.setItem('psms_v18_chats', JSON.stringify(chats));
-            if(activePin) {
-                document.getElementById('chat-window').classList.remove('hidden');
-                showMsgs();
-            }
+            showMsgs();
         }
     };
 
-    function closeChat() { document.getElementById('chat-window').classList.add('hidden'); activePin = null; }
+    function closeChat() { document.getElementById('chat-window').classList.add('hidden'); }
 </script>
 </body>
 </html>
