@@ -10,7 +10,7 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--wa-bg); color: var(--text); height: 100vh; overflow: hidden; }
         .hidden { display: none !important; }
 
-        /* Setup & Main UI */
+        /* UI Containers */
         #setup-page, #main-ui { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px; background: #111b21; }
         .setup-input { background: #2a3942; border: 1px solid #3b4a54; padding: 18px; border-radius: 15px; color: #fff; width: 100%; max-width: 350px; margin-bottom: 20px; outline: none; text-align: center; font-size: 16px; }
 
@@ -21,18 +21,18 @@
         .header-icons { display: flex; gap: 22px; }
         .message-area { flex: 1; padding: 20px; overflow-y: auto; background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-color: #0b141a; background-blend-mode: overlay; display: flex; flex-direction: column; gap: 8px; }
         
-        /* Bubbles */
+        /* Message Bubbles */
         .msg { max-width: 80%; padding: 8px 12px; border-radius: 10px; font-size: 15px; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.5); word-wrap: break-word; }
         .sent { align-self: flex-end; background: var(--wa-bubble-sent); border-top-right-radius: 0; }
         .recv { align-self: flex-start; background: var(--wa-bubble-recv); border-top-left-radius: 0; }
         .shared-img { width: 100%; max-width: 250px; border-radius: 8px; margin-top: 5px; cursor: pointer; display: block; }
 
-        /* Call Overlay */
+        /* Calling Interface */
         #call-overlay { position: fixed; inset: 0; background: #111b21; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; }
         #remote-video { width: 100%; height: 100%; background: #1c2a33; object-fit: cover; }
         #local-video { width: 100px; height: 150px; background: #000; position: absolute; top: 20px; right: 20px; border-radius: 8px; border: 2px solid var(--wa-green); z-index: 3001; }
         .call-controls { position: absolute; bottom: 50px; display: flex; gap: 40px; }
-        .call-btn { width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
+        .call-btn { width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .hangup { background: #ff3b30; }
         .answer { background: #00a884; }
 
@@ -161,7 +161,7 @@
         if(!activePin) return;
         const box = document.getElementById('msgs'); box.innerHTML = "";
         (chats[activePin] || []).forEach(m => {
-            const isImg = m.t.startsWith('data:image');
+            const isImg = m.t.includes('data:image');
             const content = isImg ? `<img src="${m.t}" class="shared-img" onclick="window.open(this.src)">` : m.t;
             box.innerHTML += `<div class="msg ${m.s == db.pin ? 'sent' : 'recv'}">${content}</div>`;
         });
@@ -208,9 +208,8 @@
 
     async function acceptCall() {
         document.getElementById('ans-btn').classList.add('hidden');
-        document.getElementById('call-status-text').innerText = "Connecting...";
-        await startMedia(currentCallType);
         document.getElementById('call-status-text').innerText = "Connected";
+        await startMedia(currentCallType);
         document.getElementById('remote-video').srcObject = localStream; 
     }
 
@@ -226,47 +225,42 @@
         if(data && data.length > 0) {
             data.forEach(m => {
                 if(!chats[m.sender]) chats[m.sender] = [];
-                // Duplicate check
+                // Check if message already exists
                 if(!chats[m.sender].some(x => x.t === m.text)) {
                     
-                    // 1. Direct Chat Arrival Logic
+                    let isCall = m.text.includes("[CALL_REQ:");
+                    let isImg = m.text.includes("data:image");
+                    let senderName = m.sender_name || "Private User";
+
+                    // Push to local chats
+                    chats[m.sender].push({ s: m.sender, t: m.text, type: isImg ? 'img' : (isCall ? 'system' : 'text') });
+
+                    // 1. Direct/Automatic Chat Arrival
                     if(activePin !== m.sender) {
-                        // Agar chat khuli nahi hai, phir bhi data store karo aur notify karo
-                        if(!chats[m.sender]) chats[m.sender] = [];
+                        // User is on main screen or other chat, just store data
                     }
 
-                    // 2. Call Handlers
-                    if(m.text.includes("[CALL_REQ:")) {
+                    // 2. Notification Logic (Offline messages will trigger here one by one)
+                    if (Notification.permission === "granted") {
+                        let notifyMsg = isImg ? "Sent a Photo" : (isCall ? "Incoming Call..." : m.text);
+                        new Notification(senderName, { body: notifyMsg });
+                    }
+
+                    // 3. UI Update for Calls
+                    if(isCall) {
                         currentCallType = m.text.includes("Video") ? "Video" : "Voice";
                         document.getElementById('call-overlay').classList.remove('hidden');
                         document.getElementById('ans-btn').classList.remove('hidden');
-                        document.getElementById('call-user-display').innerText = m.sender_name || "Unknown";
+                        document.getElementById('call-user-display').innerText = senderName;
                         document.getElementById('call-status-text').innerText = `Incoming ${currentCallType} Call...`;
-                        triggerNotify(m.sender_name, "Incoming " + currentCallType + " Call...");
-                    } else if(m.text === "[CALL_END]") {
-                        endCall();
-                    } else {
-                        // 3. Real Image / Message Handling
-                        let isImg = m.text.startsWith('data:image');
-                        chats[m.sender].push({ s: m.sender, t: m.text, type: isImg ? 'img' : 'text' });
-                        triggerNotify(m.sender_name, isImg ? "Sent a Photo" : m.text);
                     }
+                    if(m.text === "[CALL_END]") endCall();
                 }
             });
             localStorage.setItem('psms_v18_chats', JSON.stringify(chats));
             if(activePin) showMsgs();
         }
     };
-
-    function triggerNotify(sender, message) {
-        if (Notification.permission === "granted") {
-            let n = new Notification(sender || "New Message", { 
-                body: message,
-                icon: 'https://cdn-icons-png.flaticon.com/512/134/134914.png' 
-            });
-            n.onclick = () => { window.focus(); };
-        }
-    }
 
     function closeChat() { document.getElementById('chat-window').classList.add('hidden'); activePin = null; }
 </script>
