@@ -3,22 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Private Elite v18 Pro</title>
+    <title>Private Elite v18 Pro - Unlimited</title>
     <style>
         :root { --wa-green: #00a884; --wa-bg: #0b141a; --wa-panel: #202c33; --wa-bubble-sent: #005c4b; --wa-bubble-recv: #202c33; --text: #e9edef; --wa-blue: #53bdeb; --icon: #aebac1; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--wa-bg); color: var(--text); height: 100vh; overflow: hidden; }
         .hidden { display: none !important; }
 
-        /* Professional Animations */
-        @keyframes pulse-ring { 0% { transform: scale(0.8); opacity: 0.5; } 100% { transform: scale(1.2); opacity: 0; } }
-        .connecting-pulse { animation: pulse-ring 1.5s infinite; }
+        /* Animations */
+        @keyframes pulse-ring { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 168, 132, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 168, 132, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 168, 132, 0); } }
+        .active-load { animation: pulse-ring 2s infinite; pointer-events: none; background: #3b4a54 !important; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
         #setup-page, #main-ui { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px; background: #111b21; }
         .setup-input { background: #2a3942; border: 1px solid #3b4a54; padding: 18px; border-radius: 15px; color: #fff; width: 100%; max-width: 350px; margin-bottom: 20px; outline: none; text-align: center; font-size: 16px; transition: 0.3s; }
-        
-        #conn-btn.active-load { background: #3b4a54 !important; color: #aaa; pointer-events: none; }
 
         #chat-window { position: fixed; inset: 0; background: #0b141a; z-index: 2000; display: flex; flex-direction: column; animation: slideUp 0.3s ease; }
         .chat-header { background: var(--wa-panel); padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 65px; border-bottom: 1px solid #2a3942; }
@@ -36,15 +34,13 @@
         #local-video { width: 100px; height: 150px; background: #222; position: absolute; top: 20px; right: 20px; border-radius: 8px; border: 2px solid var(--wa-green); z-index: 3001; }
         .call-controls { position: absolute; bottom: 50px; display: flex; gap: 40px; z-index: 3005; }
         .call-btn { width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
-        .call-btn:active { transform: scale(0.9); }
         .hangup { background: #ff3b30; }
         .answer { background: #00a884; }
 
         .footer { background: var(--wa-panel); padding: 10px 15px; display: flex; align-items: center; gap: 10px; }
         .input-container { flex: 1; background: #2a3942; border-radius: 25px; padding: 5px 15px; display: flex; align-items: center; gap: 12px; }
         .input-container input { flex: 1; background: transparent; border: none; padding: 10px 0; color: #fff; outline: none; font-size: 16px; }
-        .icon-btn { cursor: pointer; fill: var(--icon); transition: 0.2s; }
-        .icon-btn:hover { fill: #fff; }
+        .icon-btn { cursor: pointer; fill: var(--icon); }
     </style>
 </head>
 <body>
@@ -98,7 +94,7 @@
         <div style="position:absolute; top:120px; width:100%;">
             <div style="width:100px; height:100px; background:#555; border-radius:50%; margin:0 auto 20px;"></div>
             <h2 id="call-user-display" style="font-size:32px;">Friend</h2>
-            <p id="call-status-text" style="color:var(--wa-green); font-size:18px; margin-top:10px;">Calling...</p>
+            <p id="call-status-text" style="color:var(--wa-green); font-size:18px;">Calling...</p>
         </div>
         <div class="call-controls">
             <div id="ans-btn" class="call-btn answer hidden" onclick="acceptCall()">
@@ -117,22 +113,22 @@
     let activePin = localStorage.getItem('psms_v18_activePin') || null;
     let localStream = null;
     let callType = null;
+    let lastProcessed = 0;
 
     window.onload = () => { 
         if(db) launch(); 
-        if("Notification" in window) Notification.requestPermission();
+        if("Notification" in window) {
+            Notification.requestPermission();
+        }
     };
 
     function playSound(id) { 
         const a = document.getElementById(id);
-        a.currentTime = 0;
-        a.play().catch(()=>{});
+        if(a) { a.currentTime = 0; a.play().catch(()=>{}); }
     }
-
     function stopSound(id) {
         const a = document.getElementById(id);
-        a.pause();
-        a.currentTime = 0;
+        if(a) { a.pause(); a.currentTime = 0; }
     }
 
     function startApp() {
@@ -181,6 +177,7 @@
 
     function openChat(n, pin) {
         activePin = pin;
+        localStorage.setItem('psms_v18_activePin', pin);
         document.getElementById('chat-window').classList.remove('hidden');
         document.getElementById('act-n').innerText = n;
         showMsgs();
@@ -221,7 +218,7 @@
         callType = type;
         document.getElementById('call-overlay').classList.remove('hidden');
         document.getElementById('ans-btn').classList.add('hidden');
-        document.getElementById('call-status-text').innerText = `Calling...`;
+        document.getElementById('call-status-text').innerText = `Calling (${type})...`;
         document.getElementById('call-user-display').innerText = document.getElementById('act-n').innerText;
         playSound('snd-ring');
         await startMedia(type);
@@ -234,7 +231,7 @@
             localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'Video', audio: true });
             document.getElementById('local-video').srcObject = localStream;
             document.getElementById('local-video').classList.toggle('hidden', type === 'Voice');
-        } catch (e) { alert("Mic/Camera Error"); endCall(); }
+        } catch (e) { alert("Mic/Camera Denied"); endCall(); }
     }
 
     function acceptCall() {
@@ -260,15 +257,15 @@
     window.handleSync = (data) => {
         if(data && data.length > 0) {
             data.forEach(m => {
+                let msgId = m.sender + m.text;
                 if(!chats[m.sender]) chats[m.sender] = [];
-                if(!chats[m.sender].some(x => x.t === m.text)) {
+                if(!chats[m.sender].some(x => (x.s + x.t) === msgId)) {
                     
                     let isCallReq = m.text.includes("[CALL_REQ:");
                     let isImg = m.text.startsWith('data:image');
-
                     chats[m.sender].push({ s: m.sender, t: m.text, type: isCallReq ? 'system' : (isImg ? 'img' : 'text') });
-                    
-                    // Permanent Handshake: Always know who sent the last message
+
+                    // CRITICAL: Update activePin for TWO-WAY talk
                     activePin = m.sender;
                     localStorage.setItem('psms_v18_activePin', m.sender);
 
@@ -277,16 +274,19 @@
                         document.getElementById('call-overlay').classList.remove('hidden');
                         document.getElementById('ans-btn').classList.remove('hidden');
                         document.getElementById('call-user-display').innerText = m.sender_name;
-                        document.getElementById('call-status-text').innerText = `Incoming ${callType} Call...`;
+                        document.getElementById('call-status-text').innerText = `Incoming ${callType}...`;
                         playSound('snd-ring');
                     } else if(m.text === "[CALL_END]") {
                         endCall();
                     } else {
-                        // Regular message or Image
                         playSound('snd-msg');
                         openChat(m.sender_name, m.sender);
-                        if (Notification.permission === "granted") {
-                            new Notification(m.sender_name, { body: isImg ? "Sent a photo" : m.text });
+                        // Offline Notification System
+                        if (Notification.permission === "granted" && document.hidden) {
+                            new Notification(m.sender_name, { 
+                                body: isImg ? "📷 Image" : m.text,
+                                icon: 'https://cdn-icons-png.flaticon.com/512/134/134914.png'
+                            });
                         }
                     }
                 }
