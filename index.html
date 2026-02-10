@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Private Elite v17</title>
+    <title>Private Elite v18</title>
     <style>
         :root { --wa-green: #00a884; --wa-bg: #0b141a; --wa-panel: #202c33; --wa-bubble-sent: #005c4b; --wa-bubble-recv: #202c33; --text: #e9edef; --wa-blue: #53bdeb; --icon: #aebac1; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--wa-bg); color: var(--text); height: 100vh; overflow: hidden; }
         .hidden { display: none !important; }
 
-        /* General UI Styles */
+        /* Setup & Main UI */
         #setup-page, #main-ui { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px; background: #111b21; }
         .setup-input { background: #2a3942; border: 1px solid #3b4a54; padding: 18px; border-radius: 15px; color: #fff; width: 100%; max-width: 350px; margin-bottom: 20px; outline: none; text-align: center; font-size: 16px; }
 
@@ -21,19 +21,20 @@
         .header-icons { display: flex; gap: 22px; }
         .message-area { flex: 1; padding: 20px; overflow-y: auto; background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-color: #0b141a; background-blend-mode: overlay; display: flex; flex-direction: column; gap: 8px; }
         
-        /* Message Bubbles */
+        /* Bubbles */
         .msg { max-width: 80%; padding: 8px 12px; border-radius: 10px; font-size: 15px; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.5); }
         .sent { align-self: flex-end; background: var(--wa-bubble-sent); border-top-right-radius: 0; }
         .recv { align-self: flex-start; background: var(--wa-bubble-recv); border-top-left-radius: 0; }
         .shared-img { width: 100%; max-width: 250px; border-radius: 8px; margin-top: 5px; cursor: pointer; }
 
-        /* Calling Interface */
+        /* Call Overlay */
         #call-overlay { position: fixed; inset: 0; background: #111b21; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; }
-        #local-video { width: 100px; height: 150px; background: #000; position: absolute; top: 20px; right: 20px; border-radius: 8px; border: 2px solid var(--wa-green); z-index: 3001; }
         #remote-video { width: 100%; height: 100%; background: #1c2a33; object-fit: cover; }
-        .call-controls { position: absolute; bottom: 50px; display: flex; gap: 30px; }
-        .call-btn { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        #local-video { width: 100px; height: 150px; background: #000; position: absolute; top: 20px; right: 20px; border-radius: 8px; border: 2px solid var(--wa-green); z-index: 3001; }
+        .call-controls { position: absolute; bottom: 50px; display: flex; gap: 40px; }
+        .call-btn { width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
         .hangup { background: #ff3b30; }
+        .answer { background: #00a884; }
 
         /* Footer */
         .footer { background: var(--wa-panel); padding: 10px 15px; display: flex; align-items: center; gap: 10px; }
@@ -45,7 +46,7 @@
 <body>
 
     <div id="setup-page">
-        <h1 style="color:var(--wa-green); margin-bottom:10px;">Private Elite v17</h1>
+        <h1 style="color:var(--wa-green); margin-bottom:10px;">Private Elite v18</h1>
         <input type="text" id="user-name" class="setup-input" placeholder="Your Name">
         <button class="setup-input" style="background:var(--wa-green); color:#111; font-weight:bold; border:none;" onclick="startApp()">ACTIVATE</button>
     </div>
@@ -87,11 +88,14 @@
     <div id="call-overlay" class="hidden">
         <video id="remote-video" autoplay playsinline></video>
         <video id="local-video" autoplay playsinline muted></video>
-        <div style="position:absolute; top:200px;">
-            <h2 id="call-user-name">Friend</h2>
-            <p id="call-type-status">Calling...</p>
+        <div id="call-info-ui" style="position:absolute; top:180px; width:100%;">
+            <h2 id="call-user-display" style="font-size:32px;">Friend</h2>
+            <p id="call-status-text" style="color:var(--wa-green); font-size:18px;">Calling...</p>
         </div>
         <div class="call-controls">
+            <div id="ans-btn" class="call-btn answer hidden" onclick="acceptCall()">
+                <svg fill="#fff" width="30" height="30" viewBox="0 0 24 24"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.17-.24c1.05.42 2.19.64 3.39.64a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1c-9.39 0-17-7.61-17-17a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.2.22 2.34.64 3.39a1 1 0 0 1-.24 1.17l-2.2 2.2z"></path></svg>
+            </div>
             <div class="call-btn hangup" onclick="endCall()">
                 <svg fill="#fff" width="30" height="30" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
             </div>
@@ -100,19 +104,23 @@
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4aeKaJI5X3Y9a4MSvc-UfEkvnilBHtxCVCoxDPhOH4XhTJY155HwWdVVkZJguTEiU/exec";
-    let db = JSON.parse(localStorage.getItem('psms_v17_db')) || null;
-    let chats = JSON.parse(localStorage.getItem('psms_v17_chats')) || {};
+    let db = JSON.parse(localStorage.getItem('psms_v18_db')) || null;
+    let chats = JSON.parse(localStorage.getItem('psms_v18_chats')) || {};
     let activePin = null;
     let localStream = null;
+    let currentCallType = null;
 
-    window.onload = () => { if(db) launch(); };
+    window.onload = () => { 
+        if(db) launch(); 
+        if("Notification" in window) Notification.requestPermission();
+    };
 
     function startApp() {
         let n = document.getElementById('user-name').value;
         if(!n) return;
         let p = Math.floor(100000 + Math.random() * 900000).toString();
         db = { name: n, pin: p };
-        localStorage.setItem('psms_v17_db', JSON.stringify(db));
+        localStorage.setItem('psms_v18_db', JSON.stringify(db));
         callServer(`action=register&name=${encodeURIComponent(n)}&pin=${p}`);
         launch();
     }
@@ -150,8 +158,7 @@
     }
 
     function showMsgs() {
-        const box = document.getElementById('msgs');
-        box.innerHTML = "";
+        const box = document.getElementById('msgs'); box.innerHTML = "";
         (chats[activePin] || []).forEach(m => {
             const content = m.type === 'img' ? `<img src="${m.t}" class="shared-img" onclick="window.open(this.src)">` : m.t;
             box.innerHTML += `<div class="msg ${m.s == db.pin ? 'sent' : 'recv'}">${content}</div>`;
@@ -164,7 +171,7 @@
         if(!t) return;
         if(!chats[activePin]) chats[activePin] = [];
         chats[activePin].push({ s: db.pin, t: t, type: type });
-        localStorage.setItem('psms_v17_chats', JSON.stringify(chats));
+        localStorage.setItem('psms_v18_chats', JSON.stringify(chats));
         showMsgs();
         document.getElementById('m-in').value = "";
         callServer(`action=send&from=${db.pin}&to=${activePin}&msg=${encodeURIComponent(t)}`);
@@ -178,36 +185,40 @@
         }
     }
 
-    // REAL CALLING LOGIC
+    // CALLING LOGIC
     async function initiateCall(type) {
+        currentCallType = type;
         document.getElementById('call-overlay').classList.remove('hidden');
-        document.getElementById('call-user-name').innerText = document.getElementById('act-n').innerText;
-        document.getElementById('call-type-status').innerText = `Ringing (${type})...`;
+        document.getElementById('ans-btn').classList.add('hidden');
+        document.getElementById('call-user-display').innerText = document.getElementById('act-n').innerText;
+        document.getElementById('call-status-text').innerText = `Calling (${type})...`;
         
+        await startMedia(type);
+        sendMsg(`[CALL_REQ:${type}]`, 'system');
+    }
+
+    async function startMedia(type) {
         try {
-            const constraints = {
-                video: type === 'Video',
-                audio: true
-            };
-            localStream = await navigator.mediaDevices.getUserMedia(constraints);
+            localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'Video', audio: true });
             document.getElementById('local-video').srcObject = localStream;
-            
             if(type === 'Voice') document.getElementById('local-video').classList.add('hidden');
             else document.getElementById('local-video').classList.remove('hidden');
+        } catch (e) { alert("Access Denied"); endCall(); }
+    }
 
-            sendMsg(`[CALL_SIGNAL:${type}]`, 'system');
-        } catch (err) {
-            alert("Camera/Mic access denied!");
-            endCall();
-        }
+    async function acceptCall() {
+        document.getElementById('ans-btn').classList.add('hidden');
+        document.getElementById('call-status-text').innerText = "Connecting...";
+        await startMedia(currentCallType);
+        document.getElementById('call-status-text').innerText = "Connected";
+        // Simulating Remote Audio/Video Link
+        document.getElementById('remote-video').srcObject = localStream; 
     }
 
     function endCall() {
-        if(localStream) {
-            localStream.getTracks().forEach(track => track.stop());
-        }
+        if(localStream) localStream.getTracks().forEach(t => t.stop());
         document.getElementById('call-overlay').classList.add('hidden');
-        document.getElementById('local-video').srcObject = null;
+        sendMsg("[CALL_END]", 'system');
     }
 
     function sync() { callServer(`action=getMessages&myPin=${db.pin}`, "handleSync"); }
@@ -217,20 +228,26 @@
             data.forEach(m => {
                 if(!chats[m.sender]) chats[m.sender] = [];
                 if(!chats[m.sender].some(x => x.t === m.text)) {
+                    // Call Handlers
+                    if(m.text.includes("[CALL_REQ:")) {
+                        currentCallType = m.text.includes("Video") ? "Video" : "Voice";
+                        document.getElementById('call-overlay').classList.remove('hidden');
+                        document.getElementById('ans-btn').classList.remove('hidden');
+                        document.getElementById('call-user-display').innerText = m.sender_name;
+                        document.getElementById('call-status-text').innerText = `Incoming ${currentCallType} Call...`;
+                    }
+                    if(m.text === "[CALL_END]") endCall();
+
                     let type = m.text.startsWith('data:image') ? 'img' : 'text';
                     chats[m.sender].push({ s: m.sender, t: m.text, type: type });
 
-                    if(m.text.includes("[CALL_SIGNAL:")) {
-                        let callType = m.text.includes("Video") ? "Video" : "Voice";
-                        initiateCall(callType); // Auto-answer simulation
-                    }
-
                     if (document.hidden && Notification.permission === "granted") {
-                        new Notification(m.sender_name || "New Message", { body: type === 'img' ? "Photo" : m.text });
+                        let n = new Notification(m.sender_name, { body: type==='img'?"Photo":m.text });
+                        n.onclick = () => { window.focus(); openChat(m.sender_name, m.sender); };
                     }
                 }
             });
-            localStorage.setItem('psms_v17_chats', JSON.stringify(chats));
+            localStorage.setItem('psms_v18_chats', JSON.stringify(chats));
             if(activePin) showMsgs();
         }
     };
