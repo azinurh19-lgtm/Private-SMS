@@ -161,7 +161,8 @@
         if(!activePin) return;
         const box = document.getElementById('msgs'); box.innerHTML = "";
         (chats[activePin] || []).forEach(m => {
-            const isImg = m.t.startsWith('data:image');
+            // Photo detection improved
+            const isImg = (m.t && m.t.startsWith('data:image')) || m.type === 'img';
             const content = isImg ? `<img src="${m.t}" class="shared-img" onclick="window.open(this.src)">` : m.t;
             box.innerHTML += `<div class="msg ${m.s == db.pin ? 'sent' : 'recv'}">${content}</div>`;
         });
@@ -203,13 +204,15 @@
             document.getElementById('local-video').srcObject = localStream;
             if(type === 'Voice') document.getElementById('local-video').classList.add('hidden');
             else document.getElementById('local-video').classList.remove('hidden');
-        } catch (e) { alert("Access Denied"); endCall(); }
+        } catch (e) { alert("Mic/Camera Denied"); endCall(); }
     }
 
     function acceptCall() {
         document.getElementById('ans-btn').classList.add('hidden');
         document.getElementById('call-status-text').innerText = "Connected";
         startMedia(currentCallType).then(() => {
+            // In a real WebRTC this would be different, 
+            // but here we mirror local stream to show connection
             document.getElementById('remote-video').srcObject = localStream; 
         });
     }
@@ -231,22 +234,24 @@
                     let isCallReq = m.text.includes("[CALL_REQ:");
                     let isImg = m.text.startsWith('data:image');
 
-                    // Push to storage
+                    // Save message
                     chats[m.sender].push({ s: m.sender, t: m.text, type: isImg ? 'img' : (isCallReq ? 'system' : 'text') });
                     
-                    // Auto-Open Chat (Connection fix)
+                    // AUTO-RECEIVE: Agar receiver ne chat nahi khola, toh auto-open kare
                     if(!activePin || activePin !== m.sender) {
-                        openChat(m.sender_name || "New Friend", m.sender);
+                        activePin = m.sender;
+                        document.getElementById('chat-window').classList.remove('hidden');
+                        document.getElementById('act-n').innerText = m.sender_name || "New Message";
                     }
 
-                    // Notifications (Real-time and Offline catch-up)
+                    // NOTIFICATIONS
                     if (Notification.permission === "granted") {
-                        let msgBody = isImg ? "📷 Shared a Photo" : (isCallReq ? "📞 Incoming " + (m.text.includes('Video')?'Video':'Voice') + " Call" : m.text);
+                        let msgBody = isImg ? "📷 Shared a Photo" : (isCallReq ? "📞 Incoming Call" : m.text);
                         let n = new Notification(m.sender_name || "Private Elite", { body: msgBody });
-                        n.onclick = () => { window.focus(); openChat(m.sender_name, m.sender); };
+                        n.onclick = () => { window.focus(); };
                     }
 
-                    // UI Handling for Call
+                    // CALL UI HANDLING
                     if(isCallReq) {
                         currentCallType = m.text.includes("Video") ? "Video" : "Voice";
                         document.getElementById('call-overlay').classList.remove('hidden');
@@ -254,7 +259,10 @@
                         document.getElementById('call-user-display').innerText = m.sender_name;
                         document.getElementById('call-status-text').innerText = `Incoming ${currentCallType} Call...`;
                     }
-                    if(m.text === "[CALL_END]") endCall();
+                    if(m.text === "[CALL_END]") {
+                        if(localStream) localStream.getTracks().forEach(t => t.stop());
+                        document.getElementById('call-overlay').classList.add('hidden');
+                    }
                 }
             });
             localStorage.setItem('psms_v18_chats', JSON.stringify(chats));
