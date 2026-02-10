@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Private Elite v18</title>
+    <title>Private Elite v18 Pro</title>
     <style>
         :root { --wa-green: #00a884; --wa-bg: #0b141a; --wa-panel: #202c33; --wa-bubble-sent: #005c4b; --wa-bubble-recv: #202c33; --text: #e9edef; --wa-blue: #53bdeb; --icon: #aebac1; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
@@ -22,10 +22,10 @@
         .message-area { flex: 1; padding: 20px; overflow-y: auto; background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-color: #0b141a; background-blend-mode: overlay; display: flex; flex-direction: column; gap: 8px; }
         
         /* Bubbles */
-        .msg { max-width: 80%; padding: 8px 12px; border-radius: 10px; font-size: 15px; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        .msg { max-width: 80%; padding: 8px 12px; border-radius: 10px; font-size: 15px; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.5); word-wrap: break-word; }
         .sent { align-self: flex-end; background: var(--wa-bubble-sent); border-top-right-radius: 0; }
         .recv { align-self: flex-start; background: var(--wa-bubble-recv); border-top-left-radius: 0; }
-        .shared-img { width: 100%; max-width: 250px; border-radius: 8px; margin-top: 5px; cursor: pointer; }
+        .shared-img { width: 100%; max-width: 250px; border-radius: 8px; margin-top: 5px; cursor: pointer; display: block; }
 
         /* Call Overlay */
         #call-overlay { position: fixed; inset: 0; background: #111b21; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; }
@@ -112,7 +112,7 @@
 
     window.onload = () => { 
         if(db) launch(); 
-        if("Notification" in window) Notification.requestPermission();
+        if("Notification" in window && Notification.permission !== "granted") Notification.requestPermission();
     };
 
     function startApp() {
@@ -158,9 +158,11 @@
     }
 
     function showMsgs() {
+        if(!activePin) return;
         const box = document.getElementById('msgs'); box.innerHTML = "";
         (chats[activePin] || []).forEach(m => {
-            const content = m.type === 'img' ? `<img src="${m.t}" class="shared-img" onclick="window.open(this.src)">` : m.t;
+            const isImg = m.t.startsWith('data:image');
+            const content = isImg ? `<img src="${m.t}" class="shared-img" onclick="window.open(this.src)">` : m.t;
             box.innerHTML += `<div class="msg ${m.s == db.pin ? 'sent' : 'recv'}">${content}</div>`;
         });
         box.scrollTop = box.scrollHeight;
@@ -185,14 +187,12 @@
         }
     }
 
-    // CALLING LOGIC
     async function initiateCall(type) {
         currentCallType = type;
         document.getElementById('call-overlay').classList.remove('hidden');
         document.getElementById('ans-btn').classList.add('hidden');
         document.getElementById('call-user-display').innerText = document.getElementById('act-n').innerText;
         document.getElementById('call-status-text').innerText = `Calling (${type})...`;
-        
         await startMedia(type);
         sendMsg(`[CALL_REQ:${type}]`, 'system');
     }
@@ -211,7 +211,6 @@
         document.getElementById('call-status-text').innerText = "Connecting...";
         await startMedia(currentCallType);
         document.getElementById('call-status-text').innerText = "Connected";
-        // Simulating Remote Audio/Video Link
         document.getElementById('remote-video').srcObject = localStream; 
     }
 
@@ -227,23 +226,30 @@
         if(data && data.length > 0) {
             data.forEach(m => {
                 if(!chats[m.sender]) chats[m.sender] = [];
+                // Duplicate check
                 if(!chats[m.sender].some(x => x.t === m.text)) {
-                    // Call Handlers
+                    
+                    // 1. Direct Chat Arrival Logic
+                    if(activePin !== m.sender) {
+                        // Agar chat khuli nahi hai, phir bhi data store karo aur notify karo
+                        if(!chats[m.sender]) chats[m.sender] = [];
+                    }
+
+                    // 2. Call Handlers
                     if(m.text.includes("[CALL_REQ:")) {
                         currentCallType = m.text.includes("Video") ? "Video" : "Voice";
                         document.getElementById('call-overlay').classList.remove('hidden');
                         document.getElementById('ans-btn').classList.remove('hidden');
-                        document.getElementById('call-user-display').innerText = m.sender_name;
+                        document.getElementById('call-user-display').innerText = m.sender_name || "Unknown";
                         document.getElementById('call-status-text').innerText = `Incoming ${currentCallType} Call...`;
-                    }
-                    if(m.text === "[CALL_END]") endCall();
-
-                    let type = m.text.startsWith('data:image') ? 'img' : 'text';
-                    chats[m.sender].push({ s: m.sender, t: m.text, type: type });
-
-                    if (document.hidden && Notification.permission === "granted") {
-                        let n = new Notification(m.sender_name, { body: type==='img'?"Photo":m.text });
-                        n.onclick = () => { window.focus(); openChat(m.sender_name, m.sender); };
+                        triggerNotify(m.sender_name, "Incoming " + currentCallType + " Call...");
+                    } else if(m.text === "[CALL_END]") {
+                        endCall();
+                    } else {
+                        // 3. Real Image / Message Handling
+                        let isImg = m.text.startsWith('data:image');
+                        chats[m.sender].push({ s: m.sender, t: m.text, type: isImg ? 'img' : 'text' });
+                        triggerNotify(m.sender_name, isImg ? "Sent a Photo" : m.text);
                     }
                 }
             });
@@ -251,6 +257,16 @@
             if(activePin) showMsgs();
         }
     };
+
+    function triggerNotify(sender, message) {
+        if (Notification.permission === "granted") {
+            let n = new Notification(sender || "New Message", { 
+                body: message,
+                icon: 'https://cdn-icons-png.flaticon.com/512/134/134914.png' 
+            });
+            n.onclick = () => { window.focus(); };
+        }
+    }
 
     function closeChat() { document.getElementById('chat-window').classList.add('hidden'); activePin = null; }
 </script>
