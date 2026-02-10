@@ -3,64 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Private SMS Elite v15</title>
+    <title>Private Elite v16</title>
     <style>
         :root { --wa-green: #00a884; --wa-bg: #0b141a; --wa-panel: #202c33; --wa-bubble-sent: #005c4b; --wa-bubble-recv: #202c33; --text: #e9edef; --wa-blue: #53bdeb; --icon: #aebac1; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--wa-bg); color: var(--text); height: 100vh; overflow: hidden; }
         .hidden { display: none !important; }
 
-        /* Setup & Dashboard */
+        /* General UI */
         #setup-page, #main-ui { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 25px; background: #111b21; }
-        .setup-input { background: #2a3942; border: 1px solid #3b4a54; padding: 18px; border-radius: 15px; color: #fff; width: 100%; max-width: 350px; margin-bottom: 20px; outline: none; text-align: center; font-size: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .setup-input { background: #2a3942; border: 1px solid #3b4a54; padding: 18px; border-radius: 15px; color: #fff; width: 100%; max-width: 350px; margin-bottom: 20px; outline: none; text-align: center; font-size: 16px; }
 
         /* Chat Window */
         #chat-window { position: fixed; inset: 0; background: #0b141a; z-index: 2000; display: flex; flex-direction: column; }
         .chat-header { background: var(--wa-panel); padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 65px; border-bottom: 1px solid #2a3942; }
-        .user-img { width: 42px; height: 42px; border-radius: 50%; background: #6a7175; object-fit: cover; }
+        .user-img { width: 42px; height: 42px; border-radius: 50%; background: #6a7175; overflow: hidden; }
         .header-info { flex: 1; }
-        .header-info b { font-size: 17px; }
-        .header-info span { font-size: 12px; color: var(--wa-green); display: block; }
+        .header-info b { font-size: 17px; display: block; }
+        .header-info span { font-size: 12px; color: var(--wa-green); }
         .header-icons { display: flex; gap: 22px; }
         
-        /* Message Area */
+        /* Messages */
         .message-area { flex: 1; padding: 20px; overflow-y: auto; background: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-color: #0b141a; background-blend-mode: overlay; display: flex; flex-direction: column; gap: 8px; }
         .msg { max-width: 80%; padding: 8px 12px; border-radius: 10px; font-size: 15px; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.5); }
         .sent { align-self: flex-end; background: var(--wa-bubble-sent); border-top-right-radius: 0; }
         .recv { align-self: flex-start; background: var(--wa-bubble-recv); border-top-left-radius: 0; }
-        .shared-img { width: 100%; border-radius: 8px; margin-bottom: 5px; }
-
-        /* Ticks */
-        .msg-meta { font-size: 10px; color: rgba(255,255,255,0.5); display: flex; justify-content: flex-end; align-items: center; gap: 4px; margin-top: 4px; }
-        .tick-svg { width: 16px; fill: rgba(255,255,255,0.5); }
-        .blue-tick { fill: var(--wa-blue); }
+        .shared-img { width: 100%; max-width: 250px; border-radius: 8px; margin-top: 5px; cursor: pointer; }
 
         /* Footer */
         .footer { background: var(--wa-panel); padding: 10px 15px; display: flex; align-items: center; gap: 10px; }
         .input-container { flex: 1; background: #2a3942; border-radius: 25px; padding: 5px 15px; display: flex; align-items: center; gap: 12px; }
         .input-container input { flex: 1; background: transparent; border: none; padding: 10px 0; color: #fff; outline: none; font-size: 16px; }
-        .icon-btn { cursor: pointer; fill: var(--icon); transition: 0.2s; }
-        .icon-btn:active { transform: scale(0.9); }
-        .btn-send { background: var(--wa-green); width: 48px; height: 48px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .icon-btn { cursor: pointer; fill: var(--icon); }
 
-        /* Calling Screen Overlay */
-        #call-overlay { position: fixed; inset: 0; background: #111b21; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: space-around; transition: 0.5s; }
+        /* Call Overlay */
+        #call-overlay { position: fixed; inset: 0; background: #111b21; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .call-btn-red { background: #ff3b30; width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: 50px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="setup-page">
-        <h1 style="color:var(--wa-green); margin-bottom:10px;">Private Elite</h1>
-        <input type="text" id="user-name" class="setup-input" placeholder="Enter Your Name">
-        <button class="setup-input" style="background:var(--wa-green); color:#111; font-weight:bold; border:none;" onclick="startApp()">GET STARTED</button>
+        <h1 style="color:var(--wa-green); margin-bottom:10px;">Private Elite v16</h1>
+        <input type="text" id="user-name" class="setup-input" placeholder="Your Name">
+        <button class="setup-input" style="background:var(--wa-green); color:#111; font-weight:bold; border:none;" onclick="startApp()">ACTIVATE</button>
     </div>
 
     <div id="main-ui" class="hidden">
-        <div class="user-img" style="width:80px; height:80px; margin-bottom:15px;"></div>
-        <h2 id="my-n">Name</h2>
-        <p style="color:var(--wa-green); margin-bottom:30px;">MY PIN: <b id="my-pin">000000</b></p>
-        <input type="number" id="target-pin" class="setup-input" placeholder="Enter Friend PIN">
-        <button class="setup-input" style="background:var(--wa-green); color:#111; font-weight:bold; border:none;" onclick="validatePin()">CONNECT REALTIME</button>
+        <div class="user-img" style="width:70px; height:70px; margin-bottom:10px;"></div>
+        <h2 id="my-n">User</h2>
+        <p style="color:var(--wa-green); margin-bottom:25px;">PIN: <b id="my-pin">000000</b></p>
+        <input type="number" id="target-pin" class="setup-input" placeholder="Friend's PIN">
+        <button class="setup-input" style="background:var(--wa-green); color:#111; font-weight:bold; border:none;" onclick="validatePin()">CONNECT</button>
     </div>
 
     <div id="chat-window" class="hidden">
@@ -72,18 +66,16 @@
                 <span id="typing-status">online</span>
             </div>
             <div class="header-icons">
-                <svg class="icon-btn" onclick="startCall('Video')" width="24" height="24" viewBox="0 0 24 24"><path d="M18 7c0-1.103-.897-2-2-2H4c-1.103 0-2 .897-2 2v10c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-3.333L22 17V7l-4 3.333V7z"></path></svg>
-                <svg class="icon-btn" onclick="startCall('Voice')" width="24" height="24" viewBox="0 0 24 24"><path d="M17.707 12.293a.999.999 0 00-1.414 0l-1.594 1.594c-.739-.22-2.118-.72-2.992-1.594s-1.374-2.253-1.594-2.992l1.594-1.594a.999.999 0 000-1.414l-4-4a.999.999 0 00-1.414 0L3.581 5.019c-.328.328-.523.774-.557 1.241-.136 2.391.803 5.4 3.013 7.61s5.219 3.149 7.61 3.013c.467-.034.913-.229 1.241-.557l2.819-2.819a.999.999 0 000-1.414l-4-4z"></path></svg>
+                <svg class="icon-btn" onclick="triggerCall('Video')" width="24" height="24" viewBox="0 0 24 24"><path d="M18 7c0-1.103-.897-2-2-2H4c-1.103 0-2 .897-2 2v10c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-3.333L22 17V7l-4 3.333V7z"></path></svg>
+                <svg class="icon-btn" onclick="triggerCall('Voice')" width="24" height="24" viewBox="0 0 24 24"><path d="M17.707 12.293a.999.999 0 00-1.414 0l-1.594 1.594c-.739-.22-2.118-.72-2.992-1.594s-1.374-2.253-1.594-2.992l1.594-1.594a.999.999 0 000-1.414l-4-4a.999.999 0 00-1.414 0L3.581 5.019c-.328.328-.523.774-.557 1.241-.136 2.391.803 5.4 3.013 7.61s5.219 3.149 7.61 3.013c.467-.034.913-.229 1.241-.557l2.819-2.819a.999.999 0 000-1.414l-4-4z"></path></svg>
             </div>
         </div>
-        
         <div class="message-area" id="msgs"></div>
-
         <div class="footer">
             <div class="input-container">
-                <svg class="icon-btn" onclick="document.getElementById('gallery-in').click()" width="24" height="24" viewBox="0 0 24 24"><path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6z"></path></svg>
-                <input type="text" id="m-in" placeholder="Message">
-                <input type="file" id="gallery-in" accept="image/*" class="hidden" onchange="sharePhoto(this)">
+                <svg class="icon-btn" onclick="document.getElementById('file-in').click()" width="24" height="24" viewBox="0 0 24 24"><path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6z"></path></svg>
+                <input type="text" id="m-in" placeholder="Type message">
+                <input type="file" id="file-in" accept="image/*" class="hidden" onchange="handleFile(this)">
             </div>
             <button class="btn-send" onclick="sendMsg()">
                 <svg width="24" height="24" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="#111b21"></path></svg>
@@ -92,22 +84,24 @@
     </div>
 
     <div id="call-overlay" class="hidden">
-        <div style="text-align:center;">
-            <div class="user-img" style="width:120px; height:120px; margin-bottom:20px;"></div>
-            <h1 id="call-name">Name</h1>
-            <p id="call-type">WhatsApp Video Call</p>
-        </div>
-        <div style="background:rgba(255,0,0,0.8); width:65px; height:65px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="endCall()">
-            <svg fill="#fff" width="32" height="32" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+        <div class="user-img" style="width:100px; height:100px; margin-bottom:20px;"></div>
+        <h2 id="call-user">Friend</h2>
+        <p id="call-status" style="color:var(--wa-green);">Ringing...</p>
+        <div class="call-btn-red" onclick="endCall()">
+            <svg fill="#fff" width="30" height="30" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
         </div>
     </div>
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4aeKaJI5X3Y9a4MSvc-UfEkvnilBHtxCVCoxDPhOH4XhTJY155HwWdVVkZJguTEiU/exec";
-    
-    let db = JSON.parse(localStorage.getItem('psms_v15_db')) || null;
-    let chats = JSON.parse(localStorage.getItem('psms_v15_chats')) || {};
+    let db = JSON.parse(localStorage.getItem('psms_v16_db')) || null;
+    let chats = JSON.parse(localStorage.getItem('psms_v16_chats')) || {};
     let activePin = null;
+
+    // Notification Permission Request
+    if ("Notification" in window) {
+        Notification.requestPermission();
+    }
 
     window.onload = () => { if(db) launch(); };
 
@@ -116,7 +110,7 @@
         if(!n) return;
         let p = Math.floor(100000 + Math.random() * 900000).toString();
         db = { name: n, pin: p };
-        localStorage.setItem('psms_v15_db', JSON.stringify(db));
+        localStorage.setItem('psms_v16_db', JSON.stringify(db));
         callServer(`action=register&name=${encodeURIComponent(n)}&pin=${p}`);
         launch();
     }
@@ -142,10 +136,8 @@
     }
 
     window.handleSearch = (user) => {
-        if(user && user.name) {
-            openChat(user.name, user.pin);
-            document.getElementById('target-pin').value = "";
-        } else alert("PIN not found in database!");
+        if(user && user.name) openChat(user.name, user.pin);
+        else alert("PIN not found!");
     }
 
     function openChat(n, pin) {
@@ -155,53 +147,41 @@
         showMsgs();
     }
 
-    function formatText(text) {
-        const urlRegex = /(https?:\/\/[^\s]+)/g;
-        return text.replace(urlRegex, (url) => `<a href="${url}" target="_blank" style="color:var(--wa-blue)">${url}</a>`);
-    }
-
     function showMsgs() {
         const box = document.getElementById('msgs');
         box.innerHTML = "";
         (chats[activePin] || []).forEach(m => {
-            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            const tickClass = m.seen ? 'blue-tick' : '';
-            const content = m.type === 'img' ? `<img src="${m.t}" class="shared-img">` : formatText(m.t);
-            
-            box.innerHTML += `
-                <div class="msg ${m.s == db.pin ? 'sent' : 'recv'}">
-                    ${content}
-                    <div class="msg-meta">${time} 
-                        ${m.s == db.pin ? `<svg class="tick-svg ${tickClass}" viewBox="0 0 16 11"><path d="M15.01 3.31L8.07 10.25l-3.56-3.56L4.03 7.17l4.04 4.04 7.44-7.44zM11.54 3.31l-.48.48L11.06 3.8l-7.44 7.44-4.04-4.04.48-.48L3.62 10.25l7.44-7.44z"></path></svg>` : ''}
-                    </div>
-                </div>`;
+            const content = m.type === 'img' ? `<img src="${m.t}" class="shared-img" onclick="window.open(this.src)">` : m.t;
+            box.innerHTML += `<div class="msg ${m.s == db.pin ? 'sent' : 'recv'}">${content}</div>`;
         });
         box.scrollTop = box.scrollHeight;
     }
 
-    function sendMsg(text = null, type = 'text') {
-        let t = text || document.getElementById('m-in').value;
+    function sendMsg(val = null, type = 'text') {
+        let t = val || document.getElementById('m-in').value;
         if(!t) return;
         if(!chats[activePin]) chats[activePin] = [];
-        chats[activePin].push({ s: db.pin, t: t, seen: false, type: type });
-        localStorage.setItem('psms_v15_chats', JSON.stringify(chats));
+        chats[activePin].push({ s: db.pin, t: t, type: type });
+        localStorage.setItem('psms_v16_chats', JSON.stringify(chats));
         showMsgs();
         document.getElementById('m-in').value = "";
+        // Large Image Compression logic would go here, using base64 for now
         callServer(`action=send&from=${db.pin}&to=${activePin}&msg=${encodeURIComponent(t)}`);
     }
 
-    function sharePhoto(input) {
+    function handleFile(input) {
         if (input.files && input.files[0]) {
-            let reader = new FileReader();
-            reader.onload = function(e) { sendMsg(e.target.result, 'img'); };
-            reader.readAsDataURL(input.files[0]);
+            let r = new FileReader();
+            r.onload = (e) => sendMsg(e.target.result, 'img');
+            r.readAsDataURL(input.files[0]);
         }
     }
 
-    function startCall(type) {
+    function triggerCall(type) {
         document.getElementById('call-overlay').classList.remove('hidden');
-        document.getElementById('call-name').innerText = document.getElementById('act-n').innerText;
-        document.getElementById('call-type').innerText = `Elite ${type} Calling...`;
+        document.getElementById('call-user').innerText = document.getElementById('act-n').innerText;
+        document.getElementById('call-status').innerText = `${type} calling...`;
+        sendMsg(`[CALL_REQUEST:${type}]`, 'system'); // Send call signal to friend
     }
 
     function endCall() { document.getElementById('call-overlay').classList.add('hidden'); }
@@ -213,11 +193,25 @@
             data.forEach(m => {
                 if(!chats[m.sender]) chats[m.sender] = [];
                 if(!chats[m.sender].some(x => x.t === m.text)) {
-                    chats[m.sender].push({ s: m.sender, t: m.text, seen: true, type: m.text.startsWith('data:image') ? 'img' : 'text' });
+                    let type = m.text.startsWith('data:image') ? 'img' : 'text';
+                    chats[m.sender].push({ s: m.sender, t: m.text, type: type });
+                    
+                    // Trigger Call Screen if signal received
+                    if(m.text.includes("[CALL_REQUEST:")) {
+                        triggerCall(m.text.split(":")[1].replace("]", ""));
+                    }
+
+                    // NOTIFICATION LOGIC
+                    if (Notification.permission === "granted") {
+                        let n = new Notification(m.sender_name || "New Message", {
+                            body: type === 'img' ? "Sent a photo" : m.text,
+                            icon: 'https://cdn-icons-png.flaticon.com/512/733/733585.png'
+                        });
+                        n.onclick = () => { window.focus(); openChat(m.sender_name, m.sender); };
+                    }
                 }
             });
-            if(chats[activePin]) chats[activePin].forEach(msg => msg.seen = true);
-            localStorage.setItem('psms_v15_chats', JSON.stringify(chats));
+            localStorage.setItem('psms_v16_chats', JSON.stringify(chats));
             if(activePin) showMsgs();
         }
     };
