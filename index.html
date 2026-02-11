@@ -2,227 +2,140 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Elite v300 | Final Node</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Elite v400 | Force Connect</title>
     <style>
-        :root { --neon: #00f2ff; --bg: #000; --card: #0d0d0d; --line: #1a1a1a; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background: var(--bg); color: #fff; height: 100vh; overflow: hidden; position: fixed; width: 100vw; }
+        :root { --neon: #00f2ff; --bg: #000; }
+        body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; overflow: hidden; }
         .hidden { display: none !important; }
+        .screen { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
+        .box { background: #0d0d0d; border: 1px solid #1a1a1a; padding: 30px; width: 100%; max-width: 350px; text-align: center; }
+        input { width: 100%; padding: 15px; margin-bottom: 15px; background: #000; border: 1px solid #333; color: var(--neon); text-align: center; outline: none; }
+        button { width: 100%; padding: 15px; background: var(--neon); border: none; font-weight: bold; cursor: pointer; }
+        #log { position: fixed; bottom: 0; width: 100%; background: rgba(255,0,0,0.1); color: #ff4444; font-size: 10px; padding: 5px; max-height: 50px; overflow: auto; }
         
-        /* Layouts */
-        .layer { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--bg); z-index: 100; }
-        .center-box { background: var(--card); border: 1px solid var(--line); padding: 40px; width: 92%; max-width: 400px; margin: auto; text-align: center; border-radius: 4px; }
-        
-        /* UI Elements */
-        h1 { font-size: 22px; font-weight: 200; letter-spacing: 5px; color: var(--neon); margin-bottom: 25px; }
-        .node-in { width: 100%; background: #000; border: 1px solid var(--line); padding: 18px; color: var(--neon); font-size: 16px; margin-bottom: 20px; text-align: center; outline: none; }
-        .node-btn { width: 100%; padding: 18px; border: none; background: var(--neon); color: #000; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
-
-        /* Chat System */
-        .header { padding: 15px 20px; background: #0a0a0a; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
-        #chat-flow { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; background: #000; }
-        .bubble { max-width: 80%; padding: 12px 16px; font-size: 14px; border-radius: 2px; line-height: 1.4; position: relative; }
-        .sent { align-self: flex-end; background: var(--neon); color: #000; font-weight: 500; }
-        .recv { align-self: flex-start; background: var(--card); border: 1px solid var(--line); }
-
-        .input-bar { padding: 15px; background: #0a0a0a; border-top: 1px solid var(--line); display: flex; gap: 10px; padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
-        .msg-input { flex: 1; background: #000; border: 1px solid var(--line); padding: 12px; color: #fff; outline: none; }
-
-        /* Calling & Notifications */
-        #call-ui { position: fixed; inset: 0; background: #000; z-index: 2000; display: flex; flex-direction: column; }
-        .video-v { flex: 1; position: relative; }
-        #v-remote { width: 100%; height: 100%; object-fit: cover; }
-        #v-local { width: 100px; height: 140px; position: absolute; top: 20px; right: 20px; border: 1px solid var(--neon); z-index: 2010; }
-        .call-ctrl { position: absolute; bottom: 50px; width: 100%; display: flex; justify-content: center; gap: 40px; }
-        .c-round { width: 70px; height: 70px; border-radius: 50%; border: none; font-weight: bold; color: #fff; cursor: pointer; }
+        /* Chat UI */
+        #chat-win { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 15px; background: #000; width: 100%; }
+        .msg { padding: 10px 15px; border-radius: 4px; max-width: 80%; font-size: 14px; }
+        .s { align-self: flex-end; background: var(--neon); color: #000; }
+        .r { align-self: flex-start; background: #1a1a1a; border: 1px solid #333; }
     </style>
 </head>
 <body>
 
-    <audio id="ring" src="https://assets.mixkit.co/active_storage/sfx/1359/1359-preview.mp3" loop></audio>
-    <audio id="ping" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
+    <div id="log">System Ready... Waiting for connection.</div>
 
-    <div id="scr-reg" class="layer">
-        <div class="center-box">
-            <h1>ELITE v300</h1>
-            <input type="text" id="reg-name" class="node-in" placeholder="YOUR NAME">
-            <button class="node-btn" onclick="initNode()">ACTIVATE</button>
+    <div id="scr-reg" class="screen">
+        <div class="box">
+            <h1 style="color:var(--neon); letter-spacing:3px;">NODE 400</h1>
+            <input type="text" id="reg-name" placeholder="YOUR NAME">
+            <button onclick="start()">ACTIVATE</button>
         </div>
     </div>
 
-    <div id="scr-dash" class="layer hidden">
-        <div class="center-box">
-            <p id="d-name" style="color:#444; font-size:10px; margin-bottom:10px;">NODE READY</p>
-            <h1 id="d-pin" style="font-size:45px; color:var(--neon); letter-spacing:8px; margin-bottom:30px;">000000</h1>
-            <input type="number" id="t-pin" class="node-in" placeholder="PEER PIN">
-            <button class="node-btn" onclick="linkNode()">CONNECT</button>
+    <div id="scr-dash" class="screen hidden">
+        <div class="box">
+            <h1 id="my-pin" style="font-size:40px; color:var(--neon);">000000</h1>
+            <input type="number" id="t-pin" placeholder="TARGET PIN">
+            <button onclick="connect()">CONNECT PEER</button>
         </div>
     </div>
 
-    <div id="scr-chat" class="layer hidden">
-        <div class="header">
-            <div onclick="exitChat()" style="cursor:pointer; color:var(--neon);">[BACK]</div>
-            <div id="p-name">PEER</div>
-            <div style="display:flex; gap:10px;">
-                <button onclick="startCall('Video')" style="background:none; border:1px solid var(--neon); color:var(--neon); padding:5px 10px; font-size:10px;">VIDEO</button>
-                <button onclick="startCall('Voice')" style="background:none; border:1px solid var(--neon); color:var(--neon); padding:5px 10px; font-size:10px;">VOICE</button>
-            </div>
+    <div id="scr-chat" class="screen hidden" style="justify-content: flex-start; padding: 0;">
+        <div style="width:100%; padding:15px; background:#0d0d0d; border-bottom:1px solid #1a1a1a; display:flex; justify-content:space-between;">
+            <span onclick="location.reload()">[EXIT]</span>
+            <b id="p-name">PEER</b>
+            <span onclick="alert('Calls need HTTPS to work!')" style="color:var(--neon)">CALL</span>
         </div>
-        <div id="chat-flow"></div>
-        <div class="input-bar">
-            <input type="text" id="chat-in" class="msg-input" placeholder="ENCRYPTED MSG...">
-            <button onclick="sendMsg()" class="node-btn" style="width:80px; padding:0;">SEND</button>
-        </div>
-    </div>
-
-    <div id="call-ui" class="hidden">
-        <div class="video-v">
-            <video id="v-remote" autoplay playsinline></video>
-            <video id="v-local" autoplay playsinline muted></video>
-        </div>
-        <div style="position:absolute; top:15%; width:100%; text-align:center;">
-            <h2 id="c-peer-name">PEER</h2>
-            <p id="c-status" style="color:var(--neon); letter-spacing:3px;">INCOMING...</p>
-        </div>
-        <div class="call-ctrl">
-            <button id="btn-ans" class="c-round" style="background:#2ecc71;" onclick="answer()">PICK</button>
-            <button class="c-round" style="background:#e74c3c;" onclick="hangup()">END</button>
+        <div id="chat-win"></div>
+        <div style="width:100%; padding:10px; background:#0d0d0d; display:flex; gap:5px;">
+            <input type="text" id="msg-in" style="margin:0;" placeholder="TYPE...">
+            <button onclick="send()" style="width:70px;">SEND</button>
         </div>
     </div>
 
 <script>
-    const API = "https://script.google.com/macros/s/AKfycbz4aeKaJI5X3Y9a4MSvc-UfEkvnilBHtxCVCoxDPhOH4XhTJY155HwWdVVkZJguTEiU/exec";
-    let me = JSON.parse(localStorage.getItem('node_v300')) || null;
-    let peer = null, db = {}, lock = false, stream = null, callType = null;
+    const API_URL = "https://script.google.com/macros/s/AKfycbz4aeKaJI5X3Y9a4MSvc-UfEkvnilBHtxCVCoxDPhOH4XhTJY155HwWdVVkZJguTEiU/exec";
+    let me = null, peer = null, db = {}, busy = false;
 
-    window.onload = () => { if(me) boot(); };
+    function debug(m) { document.getElementById('log').innerText = m; }
 
-    function initNode() {
-        let n = document.getElementById('reg-name').value.trim();
+    function start() {
+        let n = document.getElementById('reg-name').value;
         if(!n) return;
         me = { name: n, pin: Math.floor(100000 + Math.random() * 900000).toString() };
-        localStorage.setItem('node_v300', JSON.stringify(me));
-        exec(`action=register&name=${encodeURIComponent(n)}&pin=${me.pin}`);
-        boot();
-    }
-
-    function boot() {
         document.getElementById('scr-reg').classList.add('hidden');
         document.getElementById('scr-dash').classList.remove('hidden');
-        document.getElementById('d-name').innerText = me.name.toUpperCase();
-        document.getElementById('d-pin').innerText = me.pin;
-        setInterval(pulse, 1500);
-        if("Notification" in window) Notification.requestPermission();
+        document.getElementById('my-pin').innerText = me.pin;
+        
+        // Registering to Google
+        ping(`action=register&name=${n}&pin=${me.pin}`);
+        setInterval(sync, 2000);
     }
 
-    function exec(p, cb) {
+    function ping(p, cb) {
+        debug("Pinging Server...");
         const s = document.createElement('script');
-        s.src = `${API}?${p}&_z=${Date.now()}${cb ? '&callback='+cb : ''}`;
+        s.src = `${API_URL}?${p}&_cache=${Date.now()}${cb ? '&callback='+cb : ''}`;
         document.body.appendChild(s);
+        s.onerror = () => debug("NETWORK ERROR: Check Internet or Hosting!");
         s.onload = () => s.remove();
     }
 
-    function linkNode() {
+    function connect() {
         let p = document.getElementById('t-pin').value;
-        if(p) exec(`action=getUser&pin=${p}`, "onPeerFound");
+        ping(`action=getUser&pin=${p}`, "onPeer");
     }
 
-    window.onPeerFound = (res) => { if(res.name) openChat(res.name, res.pin); };
+    window.onPeer = (r) => { if(r.name) openChat(r.name, r.pin); else debug("Peer Not Found!"); };
 
     function openChat(n, p) {
         peer = { name: n, pin: p };
         document.getElementById('scr-dash').classList.add('hidden');
         document.getElementById('scr-chat').classList.remove('hidden');
-        document.getElementById('p-name').innerText = n.toUpperCase();
+        document.getElementById('p-name').innerText = n;
         render();
     }
 
     function render() {
-        if(!peer) return;
-        const f = document.getElementById('chat-flow');
-        f.innerHTML = "";
+        const w = document.getElementById('chat-win');
+        w.innerHTML = "";
         (db[peer.pin] || []).forEach(m => {
-            if(!m.sig) f.innerHTML += `<div class="bubble ${m.f === me.pin ? 'sent' : 'recv'}">${m.v}</div>`;
+            w.innerHTML += `<div class="msg ${m.f === me.pin ? 's' : 'r'}">${m.v}</div>`;
         });
-        f.scrollTop = f.scrollHeight;
+        w.scrollTop = w.scrollHeight;
     }
 
-    function sendMsg(val = null, sig = false) {
-        let txt = val || document.getElementById('chat-in').value.trim();
-        if(!txt || !peer) return;
+    function send() {
+        let v = document.getElementById('msg-in').value;
+        if(!v || !peer) return;
         if(!db[peer.pin]) db[peer.pin] = [];
-        db[peer.pin].push({ f: me.pin, v: txt, sig: sig });
-        if(!sig) { render(); document.getElementById('chat-in').value = ""; }
-        exec(`action=send&from=${me.pin}&from_name=${encodeURIComponent(me.name)}&to=${peer.pin}&msg=${encodeURIComponent(txt)}`);
+        db[peer.pin].push({ f: me.pin, v: v });
+        render();
+        document.getElementById('msg-in').value = "";
+        ping(`action=send&from=${me.pin}&from_name=${me.name}&to=${peer.pin}&msg=${encodeURIComponent(v)}`);
     }
 
-    // Call Engine
-    async function startCall(t) {
-        callType = t;
-        document.getElementById('call-ui').classList.remove('hidden');
-        document.getElementById('btn-ans').classList.add('hidden');
-        document.getElementById('ring').play();
-        stream = await navigator.mediaDevices.getUserMedia({video: t==='Video', audio:true});
-        document.getElementById('v-local').srcObject = stream;
-        sendMsg(`[CALL_${t}]`, true);
+    function sync() {
+        if(!me || busy) return;
+        busy = true;
+        ping(`action=getMessages&myPin=${me.pin}`, "onSync");
     }
 
-    function answer() {
-        document.getElementById('ring').pause();
-        document.getElementById('btn-ans').classList.add('hidden');
-        navigator.mediaDevices.getUserMedia({video: callType==='Video', audio:true}).then(s => {
-            stream = s;
-            document.getElementById('v-local').srcObject = s;
-            document.getElementById('v-remote').srcObject = s;
-        });
-    }
-
-    function hangup() {
-        document.getElementById('ring').pause();
-        if(stream) stream.getTracks().forEach(t => t.stop());
-        document.getElementById('call-ui').classList.add('hidden');
-        if(peer) exec(`action=send&from=${me.pin}&to=${peer.pin}&msg=[END]`);
-    }
-
-    // Polling Watchdog
-    function pulse() {
-        if(!me || lock) return;
-        lock = true;
-        exec(`action=getMessages&myPin=${me.pin}`, "onPulse");
-    }
-
-    window.onPulse = (data) => {
-        lock = false;
+    window.onSync = (data) => {
+        busy = false;
+        debug("Connected. Watching for signals...");
         if(data && data.length > 0) {
             data.forEach(m => {
                 if(!db[m.sender]) db[m.sender] = [];
                 if(!db[m.sender].some(x => x.v === m.txt)) {
-                    let isC = m.txt.includes("[CALL_"), isE = m.txt === "[END]";
-                    db[m.sender].push({ f: m.sender, v: m.txt, sig: isC || isE });
-                    if(isC) {
-                        callType = m.txt.includes("Video") ? "Video" : "Voice";
-                        peer = { name: m.sender_name, pin: m.sender };
-                        document.getElementById('call-ui').classList.remove('hidden');
-                        document.getElementById('btn-ans').classList.remove('hidden');
-                        document.getElementById('c-peer-name').innerText = m.sender_name;
-                        document.getElementById('ring').play();
-                    } else if(isE) { hangup(); }
-                    else {
-                        document.getElementById('ping').play();
-                        if (Notification.permission === "granted") new Notification(m.sender_name, {body: m.txt});
-                        openChat(m.sender_name, m.sender); // AUTO CHAT OPEN
-                    }
+                    db[m.sender].push({ f: m.sender, v: m.txt });
+                    // AUTO OPEN CHAT
+                    if(!peer || peer.pin !== m.sender) openChat(m.sender_name, m.sender);
                 }
             });
             render();
         }
-    }
-
-    function exitChat() {
-        document.getElementById('scr-chat').classList.add('hidden');
-        document.getElementById('scr-dash').classList.remove('hidden');
-        peer = null;
     }
 </script>
 </body>
