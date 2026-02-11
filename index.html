@@ -2,141 +2,214 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Elite v400 | Force Connect</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Real-Connect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --neon: #00f2ff; --bg: #000; }
-        body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; overflow: hidden; }
-        .hidden { display: none !important; }
-        .screen { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
-        .box { background: #0d0d0d; border: 1px solid #1a1a1a; padding: 30px; width: 100%; max-width: 350px; text-align: center; }
-        input { width: 100%; padding: 15px; margin-bottom: 15px; background: #000; border: 1px solid #333; color: var(--neon); text-align: center; outline: none; }
-        button { width: 100%; padding: 15px; background: var(--neon); border: none; font-weight: bold; cursor: pointer; }
-        #log { position: fixed; bottom: 0; width: 100%; background: rgba(255,0,0,0.1); color: #ff4444; font-size: 10px; padding: 5px; max-height: 50px; overflow: auto; }
-        
-        /* Chat UI */
-        #chat-win { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 15px; background: #000; width: 100%; }
-        .msg { padding: 10px 15px; border-radius: 4px; max-width: 80%; font-size: 14px; }
-        .s { align-self: flex-end; background: var(--neon); color: #000; }
-        .r { align-self: flex-start; background: #1a1a1a; border: 1px solid #333; }
+        :root { --accent: #00f2ff; --bg: #050505; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; height: 100vh; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; }
+        .btn-glow:active { transform: scale(0.95); box-shadow: 0 0 20px var(--accent); }
+        #video-grid { display: grid; grid-template-columns: 1fr; gap: 10px; height: 100%; }
+        video { width: 100%; height: 100%; object-fit: cover; border-radius: 15px; background: #111; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <div id="log">System Ready... Waiting for connection.</div>
-
-    <div id="scr-reg" class="screen">
-        <div class="box">
-            <h1 style="color:var(--neon); letter-spacing:3px;">NODE 400</h1>
-            <input type="text" id="reg-name" placeholder="YOUR NAME">
-            <button onclick="start()">ACTIVATE</button>
-        </div>
-    </div>
-
-    <div id="scr-dash" class="screen hidden">
-        <div class="box">
-            <h1 id="my-pin" style="font-size:40px; color:var(--neon);">000000</h1>
-            <input type="number" id="t-pin" placeholder="TARGET PIN">
-            <button onclick="connect()">CONNECT PEER</button>
-        </div>
-    </div>
-
-    <div id="scr-chat" class="screen hidden" style="justify-content: flex-start; padding: 0;">
-        <div style="width:100%; padding:15px; background:#0d0d0d; border-bottom:1px solid #1a1a1a; display:flex; justify-content:space-between;">
-            <span onclick="location.reload()">[EXIT]</span>
-            <b id="p-name">PEER</b>
-            <span onclick="alert('Calls need HTTPS to work!')" style="color:var(--neon)">CALL</span>
-        </div>
-        <div id="chat-win"></div>
-        <div style="width:100%; padding:10px; background:#0d0d0d; display:flex; gap:5px;">
-            <input type="text" id="msg-in" style="margin:0;" placeholder="TYPE...">
-            <button onclick="send()" style="width:70px;">SEND</button>
-        </div>
-    </div>
-
-<script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbz4aeKaJI5X3Y9a4MSvc-UfEkvnilBHtxCVCoxDPhOH4XhTJY155HwWdVVkZJguTEiU/exec";
-    let me = null, peer = null, db = {}, busy = false;
-
-    function debug(m) { document.getElementById('log').innerText = m; }
-
-    function start() {
-        let n = document.getElementById('reg-name').value;
-        if(!n) return;
-        me = { name: n, pin: Math.floor(100000 + Math.random() * 900000).toString() };
-        document.getElementById('scr-reg').classList.add('hidden');
-        document.getElementById('scr-dash').classList.remove('hidden');
-        document.getElementById('my-pin').innerText = me.pin;
+    <div id="app" class="h-full flex flex-col p-4">
         
-        // Registering to Google
-        ping(`action=register&name=${n}&pin=${me.pin}`);
-        setInterval(sync, 2000);
-    }
+        <div id="reg-screen" class="glass p-10 w-full max-w-md m-auto text-center hidden">
+            <h1 class="text-4xl font-bold mb-2 italic tracking-tighter">NEXUS</h1>
+            <p class="text-[10px] tracking-[0.5em] text-cyan-400 mb-8">SECURE PROTOCOL</p>
+            <input type="text" id="userName" placeholder="ENTER YOUR NAME" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl mb-6 outline-none focus:border-cyan-400 text-center">
+            <button onclick="initApp()" class="w-full bg-white text-black font-bold py-4 rounded-xl btn-glow">INITIALIZE</button>
+        </div>
 
-    function ping(p, cb) {
-        debug("Pinging Server...");
-        const s = document.createElement('script');
-        s.src = `${API_URL}?${p}&_cache=${Date.now()}${cb ? '&callback='+cb : ''}`;
-        document.body.appendChild(s);
-        s.onerror = () => debug("NETWORK ERROR: Check Internet or Hosting!");
-        s.onload = () => s.remove();
-    }
+        <div id="main-screen" class="flex-1 flex flex-col hidden">
+            <header class="flex justify-between items-center py-4">
+                <h2 id="display-name" class="text-xl font-light">Nexus User</h2>
+                <div class="h-2 w-2 bg-cyan-400 rounded-full shadow-[0_0_10px_#00f2ff]"></div>
+            </header>
 
-    function connect() {
-        let p = document.getElementById('t-pin').value;
-        ping(`action=getUser&pin=${p}`, "onPeer");
-    }
+            <div id="home-page" class="flex-1 space-y-6 overflow-y-auto pb-20">
+                <div class="glass p-8 text-center">
+                    <p class="text-xs text-gray-500 mb-4 tracking-widest">CONNECT VIA PIN</p>
+                    <input type="number" id="targetPin" placeholder="000000" class="bg-transparent text-5xl w-full text-center tracking-[0.5em] font-thin mb-8 outline-none">
+                    <button onclick="dispatchSignal('MESSAGE')" class="w-full p-4 glass border-cyan-500/30 text-cyan-400 font-bold mb-4">SEND MESSAGE</button>
+                    <div class="flex gap-3">
+                        <button onclick="dispatchSignal('VOICE')" class="flex-1 p-4 glass text-sm">VOICE CALL</button>
+                        <button onclick="dispatchSignal('VIDEO')" class="flex-1 p-4 glass text-sm">VIDEO CALL</button>
+                    </div>
+                </div>
 
-    window.onPeer = (r) => { if(r.name) openChat(r.name, r.pin); else debug("Peer Not Found!"); };
+                <div class="glass p-6">
+                    <p class="text-xs text-gray-500 mb-4">SCAN RADAR</p>
+                    <div id="qr-reader" class="rounded-xl overflow-hidden border border-white/10"></div>
+                </div>
+            </div>
 
-    function openChat(n, p) {
-        peer = { name: n, pin: p };
-        document.getElementById('scr-dash').classList.add('hidden');
-        document.getElementById('scr-chat').classList.remove('hidden');
-        document.getElementById('p-name').innerText = n;
-        render();
-    }
+            <div id="settings-page" class="flex-1 hidden space-y-4">
+                <div class="glass p-6 text-center">
+                    <p class="text-xs text-gray-500 mb-2">YOUR UNIQUE PIN</p>
+                    <h3 id="my-pin" class="text-4xl font-mono text-cyan-400 tracking-widest">------</h3>
+                </div>
+                <div class="glass p-6 flex flex-col items-center">
+                    <p class="text-xs text-gray-500 mb-4">YOUR QR IDENTITY</p>
+                    <div id="qrcode" class="p-4 bg-white rounded-xl"></div>
+                </div>
+            </div>
 
-    function render() {
-        const w = document.getElementById('chat-win');
-        w.innerHTML = "";
-        (db[peer.pin] || []).forEach(m => {
-            w.innerHTML += `<div class="msg ${m.f === me.pin ? 's' : 'r'}">${m.v}</div>`;
-        });
-        w.scrollTop = w.scrollHeight;
-    }
+            <nav class="glass mt-auto mb-4 p-4 flex justify-around">
+                <button onclick="switchTab('home')" class="opacity-100" id="btn-home">HOME</button>
+                <button onclick="switchTab('settings')" class="opacity-50" id="btn-settings">SETTINGS</button>
+            </nav>
+        </div>
+    </div>
 
-    function send() {
-        let v = document.getElementById('msg-in').value;
-        if(!v || !peer) return;
-        if(!db[peer.pin]) db[peer.pin] = [];
-        db[peer.pin].push({ f: me.pin, v: v });
-        render();
-        document.getElementById('msg-in').value = "";
-        ping(`action=send&from=${me.pin}&from_name=${me.name}&to=${peer.pin}&msg=${encodeURIComponent(v)}`);
-    }
+    <div id="call-screen" class="fixed inset-0 bg-black z-[200] hidden flex flex-col p-4">
+        <div id="video-grid">
+            <video id="remoteVideo" autoplay playsinline></video>
+            <video id="localVideo" autoplay playsinline muted class="absolute bottom-24 right-4 w-32 h-44 border-2 border-cyan-400"></video>
+        </div>
+        <div id="chat-box" class="hidden flex-1 bg-white/5 m-2 rounded-xl p-4 overflow-y-auto">
+            </div>
+        <div class="mt-auto flex flex-col gap-4 items-center pb-8">
+            <input type="text" id="msgInput" placeholder="Type message..." class="hidden w-full bg-white/10 p-4 rounded-full outline-none">
+            <button onclick="endCall()" class="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center shadow-xl shadow-red-900/40">
+                <svg class="w-8 h-8" fill="white" viewBox="0 0 24 24"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.24.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"></path></svg>
+            </button>
+        </div>
+    </div>
 
-    function sync() {
-        if(!me || busy) return;
-        busy = true;
-        ping(`action=getMessages&myPin=${me.pin}`, "onSync");
-    }
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz60WbpiUh7iSk8GzbJxCBgVUlBzNEpTWOEPvCocSmn2NdU6yS9W-84Qj9ulv7-5Txk/exec';
+        let myData = { name: '', pin: '' };
+        let lastTimestamp = Date.now();
 
-    window.onSync = (data) => {
-        busy = false;
-        debug("Connected. Watching for signals...");
-        if(data && data.length > 0) {
-            data.forEach(m => {
-                if(!db[m.sender]) db[m.sender] = [];
-                if(!db[m.sender].some(x => x.v === m.txt)) {
-                    db[m.sender].push({ f: m.sender, v: m.txt });
-                    // AUTO OPEN CHAT
-                    if(!peer || peer.pin !== m.sender) openChat(m.sender_name, m.sender);
-                }
-            });
-            render();
+        // 1. Initialization
+        window.onload = () => {
+            if (Notification.permission !== "granted") Notification.requestPermission();
+            const savedName = localStorage.getItem('nexus_name');
+            if (savedName) {
+                myData.name = savedName;
+                myData.pin = localStorage.getItem('nexus_pin');
+                showMain();
+            } else {
+                document.getElementById('reg-screen').classList.remove('hidden');
+            }
+        };
+
+        function initApp() {
+            const name = document.getElementById('userName').value;
+            if (name.length < 2) return;
+            const pin = Math.floor(100000 + Math.random() * 900000);
+            localStorage.setItem('nexus_name', name);
+            localStorage.setItem('nexus_pin', pin);
+            myData.name = name;
+            myData.pin = pin;
+            showMain();
         }
-    }
-</script>
+
+        function showMain() {
+            document.getElementById('reg-screen').classList.add('hidden');
+            document.getElementById('main-screen').classList.remove('hidden');
+            document.getElementById('display-name').innerText = myData.name;
+            document.getElementById('my-pin').innerText = myData.pin;
+            
+            // Generate My QR Code
+            new QRCode(document.getElementById("qrcode"), { text: myData.pin.toString(), width: 200, height: 200 });
+            
+            // Start Background Signal Watcher
+            setInterval(checkSignals, 4000);
+            startScanner();
+        }
+
+        // 2. Real QR Scanner Integration
+        function startScanner() {
+            const html5QrCode = new Html5Qrcode("qr-reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
+                (decodedText) => {
+                    document.getElementById('targetPin').value = decodedText;
+                    alert("Node Identified: " + decodedText);
+                }
+            );
+        }
+
+        // 3. Tab Switching
+        function switchTab(tab) {
+            document.getElementById('home-page').classList.toggle('hidden', tab !== 'home');
+            document.getElementById('settings-page').classList.toggle('hidden', tab !== 'settings');
+            document.getElementById('btn-home').style.opacity = tab === 'home' ? '1' : '0.5';
+            document.getElementById('btn-settings').style.opacity = tab === 'settings' ? '1' : '0.5';
+        }
+
+        // 4. Real Signals & Notifications
+        function dispatchSignal(type) {
+            const target = document.getElementById('targetPin').value;
+            if (target.length !== 6) return alert("Invalid PIN");
+
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ name: myData.name, pin: target, type: type })
+            });
+
+            openCallScreen(type, "Node: " + target);
+        }
+
+        async function checkSignals() {
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const data = await response.json();
+                
+                // Sheet check for my PIN
+                const incoming = data.filter(row => row[1] == myData.pin);
+                const latest = incoming[incoming.length - 1];
+
+                if (latest) {
+                    const signalTime = new Date(latest[3]).getTime();
+                    if (signalTime > lastTimestamp) {
+                        lastTimestamp = signalTime;
+                        triggerRealNotification(latest[0], latest[2]);
+                    }
+                }
+            } catch (e) { console.log("Syncing..."); }
+        }
+
+        function triggerRealNotification(sender, type) {
+            if (Notification.permission === "granted") {
+                new Notification(`NEXUS: ${sender}`, {
+                    body: `Incoming ${type} Request`,
+                    icon: 'https://cdn-icons-png.flaticon.com/512/2592/2592188.png'
+                });
+            }
+            openCallScreen(type, sender);
+        }
+
+        // 5. Camera & Video Logic
+        async function openCallScreen(type, title) {
+            document.getElementById('call-screen').classList.remove('hidden');
+            
+            if (type === 'VIDEO' || type === 'VOICE') {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: type === 'VIDEO', 
+                    audio: true 
+                });
+                document.getElementById('localVideo').srcObject = stream;
+            } else {
+                document.getElementById('chat-box').classList.remove('hidden');
+                document.getElementById('msgInput').classList.remove('hidden');
+            }
+        }
+
+        function endCall() {
+            const stream = document.getElementById('localVideo').srcObject;
+            if(stream) stream.getTracks().forEach(track => track.stop());
+            document.getElementById('call-screen').classList.add('hidden');
+        }
+    </script>
 </body>
 </html>
