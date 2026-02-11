@@ -2,171 +2,240 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Private SMS - Realtime</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Private SMS - Master</title>
     <style>
         :root { --gold: #d4af37; --bg: #000; --card: #111; }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body, html { margin: 0; padding: 0; background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; height: 100%; overflow: hidden; }
+        
         .screen { display: none; height: 100vh; flex-direction: column; }
         .active { display: flex; }
-        .overlay { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .card { background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid #222; width: 100%; max-width: 350px; text-align: center; }
-        input { width: 100%; padding: 15px; margin: 10px 0; border: none; border-bottom: 2px solid var(--gold); background: transparent; color: white; text-align: center; outline: none; box-sizing: border-box; font-size: 16px; }
-        button { width: 100%; padding: 15px; background: var(--gold); border: none; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 15px; color: black; }
+        .overlay { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 30px; }
+        .card { background: var(--card); padding: 40px; border-radius: 24px; border: 1px solid #222; width: 100%; max-width: 380px; text-align: center; }
         
-        .top-info { background: #080808; color: var(--gold); padding: 8px; text-align: center; font-size: 11px; border-bottom: 1px solid #222; letter-spacing: 1px; }
-        .header { padding: 15px; background: #111; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
-        .chat-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
-        .msg { max-width: 80%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.4; animation: slideIn 0.3s ease; }
-        @keyframes slideIn { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .sent { align-self: flex-end; background: var(--gold); color: black; border-bottom-right-radius: 2px; }
-        .received { align-self: flex-start; background: #222; color: white; border-bottom-left-radius: 2px; }
-        .input-area { padding: 15px; background: #111; display: flex; gap: 10px; border-top: 1px solid #222; }
+        input { width: 100%; padding: 16px; margin: 12px 0; border: none; border-bottom: 2px solid var(--gold); background: transparent; color: white; text-align: center; outline: none; font-size: 18px; }
+        button { width: 100%; padding: 16px; background: var(--gold); border: none; font-weight: bold; border-radius: 12px; cursor: pointer; margin-top: 20px; color: black; }
         
-        #call-ui { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 999; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .call-btn { width: 70px; height: 70px; border-radius: 50%; border: none; cursor: pointer; font-size: 25px; color: white; }
+        .top-info { background: #080808; color: var(--gold); padding: 10px; text-align: center; font-size: 12px; border-bottom: 1px solid #222; }
+        .header { padding: 18px; background: #111; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
+        .chat-area { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; background: #000; }
+        .msg { max-width: 85%; padding: 14px 18px; border-radius: 20px; font-size: 15px; }
+        .sent { align-self: flex-end; background: var(--gold); color: black; border-bottom-right-radius: 4px; }
+        .received { align-self: flex-start; background: #222; color: white; border-bottom-left-radius: 4px; }
+        
+        .input-area { padding: 20px; background: #111; display: flex; gap: 12px; border-top: 1px solid #222; }
+        #m-input { text-align: left; border: 1px solid #333; border-radius: 30px; padding: 12px 20px; margin: 0; flex: 1; }
+
+        /* Call UI Improvements */
+        #call-ui { position: fixed; inset: 0; background: #000; z-index: 999; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        #remoteVideo { width: 100%; height: 100%; object-fit: cover; }
+        #localVideo { position: absolute; top: 40px; right: 20px; width: 110px; height: 160px; border-radius: 15px; border: 2px solid var(--gold); object-fit: cover; display: none; }
+        .voice-icon { font-size: 100px; color: var(--gold); margin-bottom: 20px; }
+        .call-controls { position: absolute; bottom: 60px; display: flex; gap: 40px; }
+        .c-btn { width: 70px; height: 70px; border-radius: 50%; border: none; font-size: 24px; color: white; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="scr-reg" class="overlay">
     <div class="card">
-        <h1 style="color:var(--gold); letter-spacing: 3px;">PRIVATE SMS</h1>
+        <h1 style="color:var(--gold)">PRIVATE SMS</h1>
         <input type="text" id="reg-name" placeholder="Full Name">
-        <input type="number" id="reg-pin" placeholder="Set 6-Digit PIN">
-        <button onclick="saveUser()">INITIALIZE</button>
+        <button onclick="initializeAccount()">GENERATE IDENTITY</button>
     </div>
 </div>
 
 <div id="scr-portal" class="overlay" style="display:none">
     <div class="card">
-        <p style="color: var(--gold); font-size: 12px;">MY IDENTITY PIN: <b id="my-pin-display"></b></p>
-        <h2 style="margin-top: 0;">SECURE PORTAL</h2>
-        <input type="number" id="target-pin" placeholder="Enter Friend's PIN">
+        <p style="color: var(--gold); font-size: 13px;">MY PIN: <b id="my-pin-display">...</b></p>
+        <input type="number" id="target-pin" placeholder="Friend's PIN">
         <button onclick="startManual()">CONNECT</button>
     </div>
 </div>
 
 <div id="main-app" class="screen">
-    <div class="top-info">USER: <span id="u-name"></span> | IDENTITY: <b id="u-pin"></b></div>
+    <div class="top-info"><span id="u-name"></span> | ID: <b id="u-pin"></b></div>
     <div class="header">
-        <div id="status" style="font-weight: bold; color: var(--gold);">SECURE LINE</div>
-        <div style="display:flex; gap:25px; font-size: 20px;">
-            <span onclick="triggerCall('voice')" style="cursor:pointer">📞</span>
-            <span onclick="triggerCall('video')" style="cursor:pointer">🎥</span>
+        <div style="font-weight: bold; color: var(--gold);">SECURE LINE</div>
+        <div style="display:flex; gap:25px;">
+            <div onclick="triggerCall('voice')" style="cursor:pointer; font-size: 20px;">📞</div>
+            <div onclick="triggerCall('video')" style="cursor:pointer; font-size: 20px;">🎥</div>
         </div>
     </div>
     <div class="chat-area" id="flow"></div>
     <div class="input-area">
-        <input type="text" id="m-input" placeholder="Message..." style="margin:0; text-align:left; flex:1; border-radius:25px; background:#222; border:none; padding-left:20px;">
-        <button onclick="sendMsg()" style="margin:0; width:auto; padding:0 25px; border-radius:25px;">SEND</button>
+        <input type="text" id="m-input" placeholder="Message...">
+        <button onclick="sendMsg()" style="margin:0; width:auto; padding:0 25px; border-radius:30px;">SEND</button>
     </div>
 </div>
 
 <div id="call-ui">
-    <div style="font-size:80px; margin-bottom: 20px;">👤</div>
-    <h2 id="call-type" style="color:var(--gold)">INCOMING CALL</h2>
-    <p id="caller-info" style="font-size: 18px;"></p>
-    <div style="display:flex; gap:50px; margin-top:50px">
-        <button onclick="reject()" style="background:#cc0000;" class="call-btn">✕</button>
-        <button onclick="accept()" style="background:#008800;" class="call-btn">✓</button>
+    <div id="voice-display" class="voice-icon">👤</div>
+    <video id="remoteVideo" autoplay playsinline></video>
+    <video id="localVideo" autoplay playsinline muted></video>
+    
+    <div id="call-info" style="position:absolute; top:15%; text-align:center;">
+        <h2 id="call-type-txt" style="color:var(--gold); margin:0"></h2>
+        <p id="caller-info-txt" style="font-size: 20px; margin: 10px 0;"></p>
+    </div>
+
+    <div class="call-controls">
+        <button onclick="endCall()" style="background:#cc0000;" class="c-btn">END</button>
+        <button id="accept-btn" onclick="acceptCall()" style="background:#008800;" class="c-btn">JOIN</button>
     </div>
 </div>
 
 <script>
-    const API = "https://script.google.com/macros/s/AKfycbz8HqRXjUtl3Ei7sSaMhtLUYkNJrQag6eua-KrcecVQzFZmutLTj5TTrD0KdbC6S1bS/exec"; 
+    const API = "https://script.google.com/macros/s/AKfycbzxJmpSMoN6_CdXfUFymZ8CIOfllLv3PrEjWIo6IduIR_xHAsQ04vZpi8UIIyu4ON-9HQ/exec"; 
     let MY_NAME = localStorage.getItem('ps_name');
     let MY_PIN = localStorage.getItem('ps_pin');
     let TARGET = "";
-    let isBusy = false;
+    let localStream;
+    let currentCallType = "";
+
+    const ringtone = new Audio('https://assets.mixkit.co/active_storage/sfx/1359/1359-preview.mp3');
+    ringtone.loop = true;
 
     window.onload = () => {
-        if(!MY_NAME) { document.getElementById('scr-reg').style.display='flex'; }
-        else {
-            document.getElementById('scr-reg').style.display='none';
-            document.getElementById('scr-portal').style.display='flex';
-            document.getElementById('my-pin-display').innerText = MY_PIN;
-            document.getElementById('u-name').innerText = MY_NAME.toUpperCase();
-            document.getElementById('u-pin').innerText = MY_PIN;
-        }
-        setInterval(sync, 100); // 0.1s Fast Sync
+        if(!MY_NAME) document.getElementById('scr-reg').style.display='flex';
+        else setupUI();
+        
+        if ("Notification" in window) Notification.requestPermission();
+        setInterval(sync, 150); 
     };
 
-    function saveUser() {
-        let n = document.getElementById('reg-name').value;
-        let p = document.getElementById('reg-pin').value;
-        if(n && p.length === 6) {
-            localStorage.setItem('ps_name', n);
-            localStorage.setItem('ps_pin', p);
-            location.reload();
-        }
+    async function initializeAccount() {
+        let name = document.getElementById('reg-name').value;
+        if(!name) return;
+        const resp = await fetch(`${API}?action=getPin`);
+        const pin = await resp.text();
+        localStorage.setItem('ps_name', name);
+        localStorage.setItem('ps_pin', pin);
+        location.reload();
+    }
+
+    function setupUI() {
+        document.getElementById('scr-reg').style.display='none';
+        document.getElementById('scr-portal').style.display='flex';
+        document.getElementById('my-pin-display').innerText = MY_PIN;
+        document.getElementById('u-name').innerText = MY_NAME.toUpperCase();
+        document.getElementById('u-pin').innerText = MY_PIN;
     }
 
     function startManual() {
         TARGET = document.getElementById('target-pin').value;
-        if(TARGET.length === 6) launch();
+        if(TARGET.length === 6) launchApp();
     }
 
-    function launch() {
+    function launchApp() {
         document.getElementById('scr-portal').style.display='none';
         document.getElementById('main-app').classList.add('active');
-        document.getElementById('status').innerText = "LINKED: " + TARGET;
     }
 
     async function sync() {
-        if(!MY_PIN || isBusy) return;
-        isBusy = true;
+        if(!MY_PIN) return;
         try {
             const res = await fetch(`${API}?pin=${MY_PIN}`);
             const data = await res.json();
             data.forEach(item => {
-                // AUTOMATIC DISPLAY LOGIC
                 if(!document.getElementById('main-app').classList.contains('active')) {
                     TARGET = item.sender;
-                    launch();
+                    launchApp();
                 }
-                
                 if(item.type === 'chat') {
-                    render(item.message, 'received');
-                } else {
-                    document.getElementById('call-ui').style.display = 'flex';
-                    document.getElementById('call-type').innerText = item.type.toUpperCase().replace('_', ' ');
-                    document.getElementById('caller-info').innerText = item.name + " (" + item.sender + ")";
+                    renderMsg(item.message, 'received');
+                    showNotification("New Message", item.message);
+                } else if(item.type.includes('call')) {
+                    handleIncomingCall(item);
+                } else if(item.type === 'end_call') {
+                    resetCallUI();
                 }
             });
         } catch(e) {}
-        isBusy = false;
     }
 
     function sendMsg() {
         let m = document.getElementById('m-input').value;
         if(!m || !TARGET) return;
-        render(m, 'sent');
+        renderMsg(m, 'sent');
         document.getElementById('m-input').value = "";
         post({sender: MY_PIN, receiver: TARGET, message: m, type: 'chat', name: MY_NAME});
     }
 
-    function triggerCall(t) {
-        alert("Connecting " + t + "...");
-        post({sender: MY_PIN, receiver: TARGET, message: 'calling', type: t + '_call', name: MY_NAME});
+    async function triggerCall(type) {
+        currentCallType = type;
+        document.getElementById('call-ui').style.display = 'flex';
+        document.getElementById('call-type-txt').innerText = "OUTGOING " + type.toUpperCase();
+        document.getElementById('accept-btn').style.display = 'none';
+        document.getElementById('caller-info-txt').innerText = "Calling...";
+        
+        post({sender: MY_PIN, receiver: TARGET, message: 'calling', type: type + '_call', name: MY_NAME});
     }
 
-    function render(t, s) {
+    function handleIncomingCall(item) {
+        currentCallType = item.type.split('_')[0];
+        ringtone.play();
+        document.getElementById('call-ui').style.display = 'flex';
+        document.getElementById('call-type-txt').innerText = "INCOMING " + currentCallType.toUpperCase();
+        document.getElementById('caller-info-txt').innerText = item.name;
+        document.getElementById('accept-btn').style.display = 'flex';
+        showNotification("Incoming Call", item.name + " is calling...");
+    }
+
+    async function acceptCall() {
+        ringtone.pause();
+        document.getElementById('accept-btn').style.display = 'none';
+        
+        const constraints = { 
+            video: currentCallType === 'video', 
+            audio: true 
+        };
+        
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia(constraints);
+            if(currentCallType === 'video') {
+                document.getElementById('localVideo').style.display = 'block';
+                document.getElementById('localVideo').srcObject = localStream;
+                document.getElementById('voice-display').style.display = 'none';
+            } else {
+                document.getElementById('voice-display').style.display = 'block';
+            }
+        } catch(e) { alert("Mic/Camera Access Denied"); }
+    }
+
+    function endCall() {
+        post({sender: MY_PIN, receiver: TARGET, message: 'ended', type: 'end_call', name: MY_NAME});
+        resetCallUI();
+    }
+
+    function resetCallUI() {
+        if(localStream) localStream.getTracks().forEach(t => t.stop());
+        document.getElementById('call-ui').style.display = 'none';
+        document.getElementById('localVideo').style.display = 'none';
+        document.getElementById('voice-display').style.display = 'block';
+        ringtone.pause();
+    }
+
+    function renderMsg(t, s) {
         const f = document.getElementById('flow');
         const d = document.createElement('div');
         d.className = `msg ${s}`;
         d.innerText = t;
         f.appendChild(d);
         f.scrollTop = f.scrollHeight;
-        if(s === 'received' && navigator.vibrate) navigator.vibrate([200, 100, 200]);
+        if(s === 'received' && navigator.vibrate) navigator.vibrate(200);
+    }
+
+    function showNotification(title, body) {
+        if (Notification.permission === "granted") {
+            new Notification(title, { body: body });
+        }
     }
 
     function post(obj) {
         fetch(API, { method: 'POST', mode: 'no-cors', body: JSON.stringify(obj) });
     }
-
-    function reject() { document.getElementById('call-ui').style.display = 'none'; }
-    function accept() { alert("Real-time stream connecting..."); reject(); }
 </script>
 </body>
 </html>
