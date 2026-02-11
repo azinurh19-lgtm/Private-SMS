@@ -3,193 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Nexus</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <title>Private SMS - Realtime</title>
     <style>
-        :root { --accent: #00f2ff; --bg: #0a0a0a; }
-        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; margin: 0; }
-        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; }
-        .nav-btn { flex: 1; padding: 15px; text-align: center; font-size: 12px; letter-spacing: 2px; color: #555; transition: 0.3s; }
-        .nav-btn.active { color: var(--accent); border-top: 2px solid var(--accent); background: linear-gradient(to bottom, rgba(0,242,255,0.1), transparent); }
-        #qr-reader { width: 100% !important; border: none !important; border-radius: 20px; overflow: hidden; }
-        video { border-radius: 20px; }
-        .hidden { display: none !important; }
+        :root { --gold: #d4af37; --bg: #000; --card: #111; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        .screen { display: none; height: 100vh; flex-direction: column; }
+        .active { display: flex; }
+        .overlay { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .card { background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid #222; width: 100%; max-width: 350px; text-align: center; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border: none; border-bottom: 2px solid var(--gold); background: transparent; color: white; text-align: center; outline: none; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 15px; background: var(--gold); border: none; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 15px; color: black; }
+        
+        .top-info { background: #080808; color: var(--gold); padding: 8px; text-align: center; font-size: 11px; border-bottom: 1px solid #222; letter-spacing: 1px; }
+        .header { padding: 15px; background: #111; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
+        .chat-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+        .msg { max-width: 80%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.4; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .sent { align-self: flex-end; background: var(--gold); color: black; border-bottom-right-radius: 2px; }
+        .received { align-self: flex-start; background: #222; color: white; border-bottom-left-radius: 2px; }
+        .input-area { padding: 15px; background: #111; display: flex; gap: 10px; border-top: 1px solid #222; }
+        
+        #call-ui { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 999; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .call-btn { width: 70px; height: 70px; border-radius: 50%; border: none; cursor: pointer; font-size: 25px; color: white; }
     </style>
 </head>
 <body>
 
-    <div class="h-full flex flex-col p-5 relative">
-        
-        <div class="flex justify-between items-center mb-6">
-            <div>
-                <h1 id="user-display" class="text-xl font-light tracking-widest uppercase">Initializing...</h1>
-                <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    <span class="text-[10px] text-gray-500 uppercase">Secure Node</span>
-                </div>
-            </div>
-            <div id="status-dot" class="w-10 h-10 glass flex items-center justify-center">
-                <div class="w-2 h-2 bg-cyan-400 rounded-full"></div>
-            </div>
-        </div>
-
-        <div class="flex-1 relative overflow-hidden">
-            
-            <div id="home-page" class="space-y-4 h-full animate-in fade-in">
-                <div class="glass p-8 text-center shadow-2xl">
-                    <p class="text-[10px] text-gray-500 mb-6 tracking-[0.4em]">REMOTE ACCESS PIN</p>
-                    <input type="number" id="targetPin" placeholder="000000" class="bg-transparent text-5xl w-full text-center tracking-[0.3em] font-extralight mb-10 outline-none border-b border-white/10 pb-4 focus:border-cyan-500/50 transition-all">
-                    
-                    <div class="grid grid-cols-1 gap-3">
-                        <button onclick="sendSignal('CHAT')" class="w-full py-4 glass text-cyan-400 font-bold tracking-widest hover:bg-white/5 transition">SEND MESSAGE</button>
-                        <div class="flex gap-3">
-                            <button onclick="sendSignal('VOICE')" class="flex-1 py-4 glass text-xs tracking-widest">VOICE CALL</button>
-                            <button onclick="sendSignal('VIDEO')" class="flex-1 py-4 glass text-xs tracking-widest">VIDEO CALL</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="scanner-container" class="glass p-4">
-                    <button id="scan-toggle-btn" onclick="toggleScanner()" class="w-full py-4 bg-white/5 rounded-xl text-xs tracking-[0.3em] flex items-center justify-center gap-3">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        OPEN RADAR SCANNER
-                    </button>
-                    <div id="qr-reader-wrap" class="hidden mt-4">
-                        <div id="qr-reader"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="settings-page" class="hidden space-y-4 h-full animate-in">
-                <div class="glass p-8 text-center">
-                    <p class="text-[10px] text-gray-500 mb-2 tracking-[0.4em]">MY UNIQUE PROTOCOL</p>
-                    <h2 id="my-pin-display" class="text-4xl font-mono text-cyan-400 tracking-[0.5em]">------</h2>
-                </div>
-                <div class="glass p-8 flex flex-col items-center">
-                    <p class="text-[10px] text-gray-500 mb-6 tracking-[0.4em]">MY QR IDENTITY</p>
-                    <div id="qrcode" class="p-3 bg-white rounded-2xl shadow-[0_0_30px_rgba(0,242,255,0.2)]"></div>
-                </div>
-            </div>
-        </div>
-
-        <nav class="glass mt-4 flex justify-around overflow-hidden">
-            <button onclick="switchPage('home')" id="nav-home" class="nav-btn active">HOME</button>
-            <button onclick="switchPage('settings')" id="nav-settings" class="nav-btn">SETTINGS</button>
-        </nav>
+<div id="scr-reg" class="overlay">
+    <div class="card">
+        <h1 style="color:var(--gold); letter-spacing: 3px;">PRIVATE SMS</h1>
+        <input type="text" id="reg-name" placeholder="Full Name">
+        <input type="number" id="reg-pin" placeholder="Set 6-Digit PIN">
+        <button onclick="saveUser()">INITIALIZE</button>
     </div>
+</div>
 
-    <div id="call-overlay" class="fixed inset-0 bg-black z-[500] hidden flex flex-col p-8">
-        <div class="flex-1 flex flex-col items-center justify-center">
-            <div class="w-32 h-32 rounded-full border border-cyan-500/30 flex items-center justify-center animate-pulse mb-8">
-                <div class="w-24 h-24 rounded-full border border-cyan-400 flex items-center justify-center bg-cyan-500/10">
-                    <svg class="w-10 h-10 text-cyan-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path></svg>
-                </div>
-            </div>
-            <h2 id="call-name" class="text-3xl font-light tracking-widest">CONNECTING</h2>
-            <p id="call-type" class="text-cyan-500 text-[10px] mt-4 tracking-[0.8em] uppercase">Encrypting Signal</p>
-        </div>
-        <button onclick="closeCall()" class="w-20 h-20 bg-red-600 rounded-full mx-auto mb-10 flex items-center justify-center shadow-2xl shadow-red-900/50">
-            <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.24.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"></path></svg>
-        </button>
+<div id="scr-portal" class="overlay" style="display:none">
+    <div class="card">
+        <p style="color: var(--gold); font-size: 12px;">MY IDENTITY PIN: <b id="my-pin-display"></b></p>
+        <h2 style="margin-top: 0;">SECURE PORTAL</h2>
+        <input type="number" id="target-pin" placeholder="Enter Friend's PIN">
+        <button onclick="startManual()">CONNECT</button>
     </div>
+</div>
 
-    <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbz60WbpiUh7iSk8GzbJxCBgVUlBzNEpTWOEPvCocSmn2NdU6yS9W-84Qj9ulv7-5Txk/exec';
-        let user = { name: '', pin: '' };
-        let scanner = null;
+<div id="main-app" class="screen">
+    <div class="top-info">USER: <span id="u-name"></span> | IDENTITY: <b id="u-pin"></b></div>
+    <div class="header">
+        <div id="status" style="font-weight: bold; color: var(--gold);">SECURE LINE</div>
+        <div style="display:flex; gap:25px; font-size: 20px;">
+            <span onclick="triggerCall('voice')" style="cursor:pointer">📞</span>
+            <span onclick="triggerCall('video')" style="cursor:pointer">🎥</span>
+        </div>
+    </div>
+    <div class="chat-area" id="flow"></div>
+    <div class="input-area">
+        <input type="text" id="m-input" placeholder="Message..." style="margin:0; text-align:left; flex:1; border-radius:25px; background:#222; border:none; padding-left:20px;">
+        <button onclick="sendMsg()" style="margin:0; width:auto; padding:0 25px; border-radius:25px;">SEND</button>
+    </div>
+</div>
 
-        window.onload = () => {
-            const savedName = localStorage.getItem('nx_name');
-            if (savedName) {
-                user.name = savedName;
-                user.pin = localStorage.getItem('nx_pin');
-                launchApp();
-            } else {
-                const n = prompt("ENTER YOUR NAME:");
-                if(!n) window.location.reload();
-                const p = Math.floor(100000 + Math.random() * 900000);
-                localStorage.setItem('nx_name', n);
-                localStorage.setItem('nx_pin', p);
-                user.name = n; user.pin = p;
-                launchApp();
-            }
-        };
+<div id="call-ui">
+    <div style="font-size:80px; margin-bottom: 20px;">👤</div>
+    <h2 id="call-type" style="color:var(--gold)">INCOMING CALL</h2>
+    <p id="caller-info" style="font-size: 18px;"></p>
+    <div style="display:flex; gap:50px; margin-top:50px">
+        <button onclick="reject()" style="background:#cc0000;" class="call-btn">✕</button>
+        <button onclick="accept()" style="background:#008800;" class="call-btn">✓</button>
+    </div>
+</div>
 
-        function launchApp() {
-            document.getElementById('user-display').innerText = user.name;
-            document.getElementById('my-pin-display').innerText = user.pin;
-            new QRCode(document.getElementById("qrcode"), { text: user.pin.toString(), width: 200, height: 200, colorDark: "#000000", colorLight: "#ffffff" });
-            setInterval(syncSignals, 5000);
+<script>
+    const API = "https://script.google.com/macros/s/AKfycbz8HqRXjUtl3Ei7sSaMhtLUYkNJrQag6eua-KrcecVQzFZmutLTj5TTrD0KdbC6S1bS/exec"; 
+    let MY_NAME = localStorage.getItem('ps_name');
+    let MY_PIN = localStorage.getItem('ps_pin');
+    let TARGET = "";
+    let isBusy = false;
+
+    window.onload = () => {
+        if(!MY_NAME) { document.getElementById('scr-reg').style.display='flex'; }
+        else {
+            document.getElementById('scr-reg').style.display='none';
+            document.getElementById('scr-portal').style.display='flex';
+            document.getElementById('my-pin-display').innerText = MY_PIN;
+            document.getElementById('u-name').innerText = MY_NAME.toUpperCase();
+            document.getElementById('u-pin').innerText = MY_PIN;
         }
+        setInterval(sync, 100); // 0.1s Fast Sync
+    };
 
-        function switchPage(page) {
-            document.getElementById('home-page').classList.toggle('hidden', page !== 'home');
-            document.getElementById('settings-page').classList.toggle('hidden', page !== 'settings');
-            document.getElementById('nav-home').classList.toggle('active', page === 'home');
-            document.getElementById('nav-settings').classList.toggle('active', page === 'settings');
-            if(page === 'settings' && scanner) stopScanner();
+    function saveUser() {
+        let n = document.getElementById('reg-name').value;
+        let p = document.getElementById('reg-pin').value;
+        if(n && p.length === 6) {
+            localStorage.setItem('ps_name', n);
+            localStorage.setItem('ps_pin', p);
+            location.reload();
         }
+    }
 
-        function toggleScanner() {
-            const wrap = document.getElementById('qr-reader-wrap');
-            const btn = document.getElementById('scan-toggle-btn');
-            
-            if (wrap.classList.contains('hidden')) {
-                wrap.classList.remove('hidden');
-                btn.innerText = "CLOSE SCANNER";
-                scanner = new Html5Qrcode("qr-reader");
-                scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 }, (txt) => {
-                    document.getElementById('targetPin').value = txt;
-                    toggleScanner();
-                });
-            } else {
-                stopScanner();
-                wrap.classList.add('hidden');
-                btn.innerText = "OPEN RADAR SCANNER";
-            }
-        }
+    function startManual() {
+        TARGET = document.getElementById('target-pin').value;
+        if(TARGET.length === 6) launch();
+    }
 
-        function stopScanner() {
-            if(scanner) {
-                scanner.stop().then(() => scanner = null);
-            }
-        }
+    function launch() {
+        document.getElementById('scr-portal').style.display='none';
+        document.getElementById('main-app').classList.add('active');
+        document.getElementById('status').innerText = "LINKED: " + TARGET;
+    }
 
-        function sendSignal(type) {
-            const target = document.getElementById('targetPin').value;
-            if(target.length !== 6) return alert("ENTER 6 DIGIT PIN");
-            
-            fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ name: user.name, pin: target, type: type }) });
-            
-            document.getElementById('call-overlay').classList.remove('hidden');
-            document.getElementById('call-name').innerText = "NODE " + target;
-            document.getElementById('call-type').innerText = "OUTGOING " + type;
-        }
-
-        async function syncSignals() {
-            try {
-                const res = await fetch(API_URL);
-                const data = await res.json();
-                const mySignals = data.filter(r => r[1] == user.pin);
-                const last = mySignals[mySignals.length - 1];
-                
-                if(last && (new Date() - new Date(last[3]) < 10000)) {
-                    showIncoming(last[0], last[2]);
+    async function sync() {
+        if(!MY_PIN || isBusy) return;
+        isBusy = true;
+        try {
+            const res = await fetch(`${API}?pin=${MY_PIN}`);
+            const data = await res.json();
+            data.forEach(item => {
+                // AUTOMATIC DISPLAY LOGIC
+                if(!document.getElementById('main-app').classList.contains('active')) {
+                    TARGET = item.sender;
+                    launch();
                 }
-            } catch(e) {}
-        }
+                
+                if(item.type === 'chat') {
+                    render(item.message, 'received');
+                } else {
+                    document.getElementById('call-ui').style.display = 'flex';
+                    document.getElementById('call-type').innerText = item.type.toUpperCase().replace('_', ' ');
+                    document.getElementById('caller-info').innerText = item.name + " (" + item.sender + ")";
+                }
+            });
+        } catch(e) {}
+        isBusy = false;
+    }
 
-        function showIncoming(sender, type) {
-            document.getElementById('call-overlay').classList.remove('hidden');
-            document.getElementById('call-name').innerText = sender;
-            document.getElementById('call-type').innerText = "INCOMING " + type;
-        }
+    function sendMsg() {
+        let m = document.getElementById('m-input').value;
+        if(!m || !TARGET) return;
+        render(m, 'sent');
+        document.getElementById('m-input').value = "";
+        post({sender: MY_PIN, receiver: TARGET, message: m, type: 'chat', name: MY_NAME});
+    }
 
-        function closeCall() {
-            document.getElementById('call-overlay').classList.add('hidden');
-        }
-    </script>
+    function triggerCall(t) {
+        alert("Connecting " + t + "...");
+        post({sender: MY_PIN, receiver: TARGET, message: 'calling', type: t + '_call', name: MY_NAME});
+    }
+
+    function render(t, s) {
+        const f = document.getElementById('flow');
+        const d = document.createElement('div');
+        d.className = `msg ${s}`;
+        d.innerText = t;
+        f.appendChild(d);
+        f.scrollTop = f.scrollHeight;
+        if(s === 'received' && navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    }
+
+    function post(obj) {
+        fetch(API, { method: 'POST', mode: 'no-cors', body: JSON.stringify(obj) });
+    }
+
+    function reject() { document.getElementById('call-ui').style.display = 'none'; }
+    function accept() { alert("Real-time stream connecting..."); reject(); }
+</script>
 </body>
 </html>
