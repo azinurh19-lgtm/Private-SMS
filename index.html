@@ -3,296 +3,300 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Elite Ultra Pro Max v30</title>
+    <title>Elite Ultra v32 | Zero-Limit</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --glass: rgba(13, 17, 23, 0.98);
+            --glass: rgba(10, 14, 20, 0.98);
             --neon: #00f2ff;
             --accent: linear-gradient(135deg, #00f2ff 0%, #7000ff 100%);
             --sent: #007aff;
-            --recv: #232d36;
+            --recv: #1c252e;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { font-family: 'Outfit', sans-serif; background: #010409; color: #fff; height: 100vh; overflow: hidden; }
         .hidden { display: none !important; }
 
-        /* Full Screen Layers */
-        .page { position: fixed; inset: 0; display: flex; flex-direction: column; z-index: 10; background: #010409; transition: 0.3s; }
-        .glass-panel { background: var(--glass); backdrop-filter: blur(25px); border-radius: 40px; border: 1px solid rgba(255,255,255,0.1); padding: 35px; width: 90%; max-width: 400px; margin: auto; text-align: center; box-shadow: 0 50px 100px rgba(0,0,0,0.9); }
+        /* Page Layouts */
+        .page { position: fixed; inset: 0; display: flex; flex-direction: column; z-index: 10; background: #010409; }
+        .glass-panel { background: var(--glass); backdrop-filter: blur(30px); border-radius: 40px; border: 1px solid rgba(255,255,255,0.08); padding: 40px; width: 92%; max-width: 420px; margin: auto; text-align: center; box-shadow: 0 40px 80px rgba(0,0,0,0.8); }
 
-        /* UI Elements */
-        .modern-input { width: 100%; background: #0d1117; border: 1px solid #30363d; padding: 20px; border-radius: 20px; color: #fff; font-size: 16px; margin-bottom: 20px; outline: none; }
-        .btn-glow { width: 100%; padding: 18px; border-radius: 20px; border: none; background: var(--accent); color: #fff; font-weight: 700; cursor: pointer; box-shadow: 0 10px 30px rgba(112, 0, 255, 0.3); }
+        /* Inputs & Buttons */
+        .modern-input { width: 100%; background: #0d1117; border: 1px solid #30363d; padding: 20px; border-radius: 22px; color: #fff; font-size: 16px; margin-bottom: 22px; outline: none; transition: 0.3s; }
+        .modern-input:focus { border-color: var(--neon); box-shadow: 0 0 15px rgba(0,242,255,0.2); }
+        .btn-glow { width: 100%; padding: 20px; border-radius: 22px; border: none; background: var(--accent); color: #fff; font-weight: 700; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 30px rgba(112, 0, 255, 0.4); }
 
-        /* Chat System */
-        .chat-header { padding: 15px 20px; background: rgba(1, 4, 9, 0.95); border-bottom: 1px solid #30363d; display: flex; align-items: center; justify-content: space-between; }
-        .avatar { width: 45px; height: 45px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid #000; }
-        .msg-flow { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-        .bubble { max-width: 75%; padding: 12px 18px; border-radius: 22px; font-size: 15px; line-height: 1.4; animation: slideIn 0.2s ease; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .sent { align-self: flex-end; background: var(--sent); border-bottom-right-radius: 4px; }
-        .recv { align-self: flex-start; background: var(--recv); border-bottom-left-radius: 4px; }
-        .bubble img { width: 100%; border-radius: 15px; margin-top: 5px; cursor: pointer; }
+        /* Chat UI */
+        .chat-header { padding: 15px 20px; background: rgba(1, 4, 9, 0.98); border-bottom: 1px solid #21262d; display: flex; align-items: center; justify-content: space-between; z-index: 100; }
+        .avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 800; border: 2px solid #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        
+        .msg-flow { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; background: radial-gradient(circle at center, #0d1117 0%, #010409 100%); }
+        .bubble { max-width: 80%; padding: 14px 18px; border-radius: 24px; font-size: 15.5px; line-height: 1.5; animation: pop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; }
+        @keyframes pop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .sent { align-self: flex-end; background: var(--sent); border-bottom-right-radius: 4px; color: #fff; }
+        .recv { align-self: flex-start; background: var(--recv); border-bottom-left-radius: 4px; border: 1px solid #30363d; }
+        .bubble img { width: 100%; border-radius: 16px; margin-top: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.4); }
 
-        /* CALL SCREEN OVERLAY (HIGHEST Z-INDEX) */
-        #call-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: space-around; }
-        #remote-video { width: 100%; height: 100%; object-fit: cover; position: absolute; }
-        #local-video { width: 120px; height: 180px; border-radius: 20px; position: absolute; top: 50px; right: 25px; border: 2px solid var(--neon); z-index: 10001; object-fit: cover; }
-        .call-info { z-index: 10002; text-align: center; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
-        .call-btns { z-index: 10002; display: flex; gap: 50px; }
-        .c-btn { width: 75px; height: 75px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .c-end { background: #ff3b30; }
-        .c-ans { background: #34c759; }
+        /* Call System Overlay */
+        #call-overlay { position: fixed; inset: 0; background: #000; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: space-around; }
+        video { width: 100%; height: 100%; object-fit: cover; position: absolute; }
+        #local-video { width: 130px; height: 190px; border-radius: 24px; position: absolute; top: 60px; right: 25px; border: 3px solid var(--neon); z-index: 100001; object-fit: cover; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        .call-meta { z-index: 100002; text-align: center; }
+        .call-btns { z-index: 100002; display: flex; gap: 60px; }
+        .action-btn { width: 80px; height: 80px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
+        .hangup { background: #ff3b30; box-shadow: 0 0 20px rgba(255,59,48,0.4); }
+        .pickup { background: #34c759; box-shadow: 0 0 20px rgba(52,199,89,0.4); }
 
-        .footer { padding: 15px 20px; background: #0d1117; display: flex; gap: 10px; align-items: center; padding-bottom: 35px; }
-        .in-wrap { flex: 1; background: #161b22; border-radius: 30px; display: flex; align-items: center; padding: 5px 15px; border: 1px solid #30363d; }
-        .in-wrap input { flex: 1; background: none; border: none; padding: 12px; color: #fff; outline: none; }
+        .chat-footer { padding: 15px 20px; background: #0d1117; display: flex; gap: 12px; align-items: center; padding-bottom: 40px; }
+        .input-box { flex: 1; background: #161b22; border-radius: 35px; display: flex; align-items: center; padding: 4px 18px; border: 1px solid #30363d; }
+        .input-box input { flex: 1; background: none; border: none; padding: 14px; color: #fff; outline: none; font-size: 16px; }
     </style>
 </head>
 <body>
 
-    <audio id="snd-ring" src="https://assets.mixkit.co/active_storage/sfx/1359/1359-preview.mp3" loop></audio>
-    <audio id="snd-msg" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
+    <audio id="ring-tone" src="https://assets.mixkit.co/active_storage/sfx/1359/1359-preview.mp3" loop></audio>
+    <audio id="msg-tone" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
-    <div id="page-reg" class="page">
+    <div id="p-reg" class="page">
         <div class="glass-panel">
-            <h1 style="font-size: 35px; margin-bottom: 10px; letter-spacing: -1px;">Elite <span style="color:var(--neon)">Pro</span></h1>
-            <p style="color: #94a3b8; margin-bottom: 30px;">ULTRA-PRIVATE LINK</p>
-            <input type="text" id="reg-name" class="modern-input" placeholder="Display Name">
-            <button class="btn-glow" onclick="initUser()">CREATE NODE</button>
+            <h1 style="font-size: 40px; letter-spacing: -2px;">Elite<span style="color:var(--neon)">Ultra</span></h1>
+            <p style="color: #8b949e; margin-bottom: 35px;">UNLIMITED ENCRYPTED NODE</p>
+            <input type="text" id="user-name" class="modern-input" placeholder="Enter Identity">
+            <button class="btn-glow" onclick="registerUser()">START LIFETIME SESSION</button>
         </div>
     </div>
 
-    <div id="page-home" class="page hidden">
+    <div id="p-home" class="page hidden">
         <div class="glass-panel">
-            <div class="avatar" id="my-av" style="width:90px; height:90px; font-size:40px; margin:0 auto 20px;">?</div>
-            <h2 id="my-name">User</h2>
-            <p id="my-pin" style="color: var(--neon); letter-spacing: 6px; font-size: 26px; margin: 15px 0 35px;">000000</p>
-            <input type="number" id="target-pin" class="modern-input" placeholder="Enter Friend's PIN">
-            <button class="btn-glow" onclick="startConnection()">ESTABLISH LINK</button>
+            <div class="avatar" id="my-av" style="width:100px; height:100px; font-size:45px; margin:0 auto 20px;">?</div>
+            <h2 id="my-display-name">User</h2>
+            <p id="my-display-pin" style="color: var(--neon); letter-spacing: 8px; font-size: 28px; margin: 15px 0 40px;">000000</p>
+            <input type="number" id="peer-pin-input" class="modern-input" placeholder="Target Node PIN">
+            <button class="btn-glow" onclick="connectToPeer()">LINK CONNECT</button>
         </div>
     </div>
 
-    <div id="page-chat" class="page hidden">
+    <div id="p-chat" class="page hidden">
         <div class="chat-header">
-            <div style="display:flex; align-items:center; gap:12px;">
-                <div onclick="closeChat()" style="cursor:pointer; padding:5px;">✕</div>
-                <div class="avatar" id="peer-av" style="width:40px; height:40px;">?</div>
-                <div><b id="peer-name">Friend</b><br><small style="color:#34c759">Secured</small></div>
+            <div style="display:flex; align-items:center; gap:15px;">
+                <div onclick="exitChat()" style="cursor:pointer; font-size: 20px; padding: 5px;">✕</div>
+                <div class="avatar" id="peer-chat-av" style="width:42px; height:42px;">?</div>
+                <div><b id="peer-chat-name">Friend</b><br><small style="color:#34c759">● Active Node</small></div>
             </div>
-            <div style="display:flex; gap:20px;">
-                <svg onclick="initiateCall('Video')" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
-                <svg onclick="initiateCall('Voice')" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            <div style="display:flex; gap:22px;">
+                <svg onclick="prepCall('Video')" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--neon)" stroke-width="2" style="cursor:pointer"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                <svg onclick="prepCall('Voice')" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--neon)" stroke-width="2" style="cursor:pointer"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
             </div>
         </div>
-        <div class="msg-flow" id="msg-box"></div>
-        <div class="footer">
-            <div class="in-wrap">
-                <svg onclick="document.getElementById('img-in').click()" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" style="cursor:pointer"><path d="M12 5v14M5 12h14"></path></svg>
-                <input type="text" id="m-text" placeholder="Type a message...">
-                <input type="file" id="img-in" class="hidden" accept="image/*" onchange="sendImage(this)">
+        <div class="msg-flow" id="msg-render"></div>
+        <div class="chat-footer">
+            <div class="input-box">
+                <svg onclick="document.getElementById('media-in').click()" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2" style="cursor:pointer"><path d="M12 5v14M5 12h14"></path></svg>
+                <input type="text" id="msg-input" placeholder="End-to-end encrypted...">
+                <input type="file" id="media-in" class="hidden" accept="image/*" onchange="sendImage(this)">
             </div>
-            <button class="avatar" style="width:50px; height:50px; border:none; cursor:pointer;" onclick="pushMsg()">
+            <button class="avatar" style="width:52px; height:52px; border:none; cursor:pointer;" onclick="broadcastMsg()">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
             </button>
         </div>
     </div>
 
     <div id="call-overlay" class="hidden">
-        <video id="remote-video" autoplay playsinline></video>
-        <video id="local-video" autoplay playsinline muted></video>
-        <div class="call-info">
-            <div class="avatar" id="call-av" style="width:120px; height:120px; font-size:50px; margin:0 auto 20px; border:4px solid var(--neon);">?</div>
-            <h1 id="call-name" style="font-size:32px;">Caller</h1>
-            <p id="call-status" style="color:var(--neon); letter-spacing:3px; margin-top:10px;">CONNECTING...</p>
+        <video id="remote-v" autoplay playsinline></video>
+        <video id="local-v" autoplay playsinline muted></video>
+        <div class="call-meta">
+            <div class="avatar" id="call-scr-av" style="width:130px; height:130px; font-size:55px; margin:0 auto 25px; border:4px solid var(--neon);">?</div>
+            <h1 id="call-scr-name" style="font-size:35px;">User</h1>
+            <p id="call-scr-status" style="color:var(--neon); letter-spacing:4px; margin-top:12px; font-weight:600;">SIGNALING</p>
         </div>
         <div class="call-btns">
-            <button id="ans-btn" class="c-btn c-ans hidden" onclick="acceptIncoming()">
-                <svg width="35" height="35" viewBox="0 0 24 24" fill="#fff"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.17-.24c1.05.42 2.19.64 3.39.64a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1c-9.39 0-17-7.61-17-17a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.2.22 2.34.64 3.39a1 1 0 0 1-.24 1.17l-2.2 2.2z"></path></svg>
+            <button id="btn-ans" class="action-btn pickup hidden" onclick="answerCall()">
+                <svg width="38" height="38" viewBox="0 0 24 24" fill="#fff"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.17-.24c1.05.42 2.19.64 3.39.64a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1c-9.39 0-17-7.61-17-17a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.2.22 2.34.64 3.39a1 1 0 0 1-.24 1.17l-2.2 2.2z"></path></svg>
             </button>
-            <button class="c-btn c-end" onclick="hangup()">
-                <svg width="35" height="35" viewBox="0 0 24 24" fill="#fff"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            <button class="action-btn hangup" onclick="killCall()">
+                <svg width="38" height="38" viewBox="0 0 24 24" fill="#fff"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
             </button>
         </div>
     </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4aeKaJI5X3Y9a4MSvc-UfEkvnilBHtxCVCoxDPhOH4XhTJY155HwWdVVkZJguTEiU/exec";
-    let my = JSON.parse(localStorage.getItem('elite_v30_me')) || null;
-    let cache = JSON.parse(localStorage.getItem('elite_v30_db')) || {};
-    let activePin = null;
-    let stream = null;
-    let currentCallType = null;
-    let isBusy = false;
+    const ENDPOINT = "https://script.google.com/macros/s/AKfycbz4aeKaJI5X3Y9a4MSvc-UfEkvnilBHtxCVCoxDPhOH4XhTJY155HwWdVVkZJguTEiU/exec";
+    let userData = JSON.parse(localStorage.getItem('ultra_v32_user')) || null;
+    let localDB = JSON.parse(localStorage.getItem('ultra_v32_db')) || {};
+    let activePeer = null;
+    let mediaStream = null;
+    let cType = null;
+    let lock = false;
 
     window.onload = () => {
-        if(my) launch();
-        document.getElementById('m-text').addEventListener('keypress', (e) => e.key==='Enter' && pushMsg());
+        if(userData) startApp();
+        document.getElementById('msg-input').onkeydown = (e) => e.key === 'Enter' && broadcastMsg();
     };
 
-    function initUser() {
-        let n = document.getElementById('reg-name').value.trim();
-        if(!n) return;
-        let p = Math.floor(100000 + Math.random() * 900000).toString();
-        my = { name: n, pin: p };
-        localStorage.setItem('elite_v30_me', JSON.stringify(my));
-        apiCall(`action=register&name=${encodeURIComponent(n)}&pin=${p}`);
-        launch();
+    function registerUser() {
+        let name = document.getElementById('user-name').value.trim();
+        if(!name) return;
+        let pin = Math.floor(100000 + Math.random() * 900000).toString();
+        userData = { name, pin };
+        localStorage.setItem('ultra_v32_user', JSON.stringify(userData));
+        serverSync(`action=register&name=${encodeURIComponent(name)}&pin=${pin}`);
+        startApp();
     }
 
-    function launch() {
-        document.getElementById('page-reg').classList.add('hidden');
-        document.getElementById('page-home').classList.remove('hidden');
-        document.getElementById('my-name').innerText = my.name;
-        document.getElementById('my-pin').innerText = my.pin;
-        document.getElementById('my-av').innerText = my.name.charAt(0).toUpperCase();
-        setInterval(sync, 1000);
+    function startApp() {
+        document.getElementById('p-reg').classList.add('hidden');
+        document.getElementById('p-home').classList.remove('hidden');
+        document.getElementById('my-display-name').innerText = userData.name;
+        document.getElementById('my-display-pin').innerText = userData.pin;
+        document.getElementById('my-av').innerText = userData.name[0].toUpperCase();
+        setInterval(coreSync, 1000);
     }
 
-    function apiCall(p, cb) {
+    function serverSync(p, cb) {
         const s = document.createElement('script');
-        s.src = `${SCRIPT_URL}?${p}&_t=${Date.now()}${cb ? '&callback='+cb : ''}`;
+        s.src = `${ENDPOINT}?${p}&_t=${Date.now()}${cb ? '&callback='+cb : ''}`;
         document.body.appendChild(s);
         s.onload = () => s.remove();
     }
 
-    function startConnection() {
-        let p = document.getElementById('target-pin').value;
-        if(!p) return;
-        apiCall(`action=getUser&pin=${p}`, "onUserFound");
+    function connectToPeer() {
+        let pin = document.getElementById('peer-pin-input').value;
+        if(!pin) return;
+        serverSync(`action=getUser&pin=${pin}`, "onPeerResult");
     }
 
-    window.onUserFound = (u) => {
-        if(u && u.name) openChat(u.name, u.pin);
-        else alert("Link Failed: Peer Offline");
+    window.onPeerResult = (u) => {
+        if(u && u.name) initChat(u.name, u.pin);
+        else alert("Node not found!");
+    };
+
+    function initChat(name, pin) {
+        activePeer = pin;
+        document.getElementById('p-home').classList.add('hidden');
+        document.getElementById('p-chat').classList.remove('hidden');
+        document.getElementById('peer-chat-name').innerText = name;
+        document.getElementById('peer-chat-av').innerText = name[0].toUpperCase();
+        updateUI();
     }
 
-    function openChat(name, pin) {
-        activePin = pin;
-        document.getElementById('page-home').classList.add('hidden');
-        document.getElementById('page-chat').classList.remove('hidden');
-        document.getElementById('peer-name').innerText = name;
-        document.getElementById('peer-av').innerText = name.charAt(0).toUpperCase();
-        drawMsgs();
-    }
-
-    function drawMsgs() {
-        if(!activePin) return;
-        const box = document.getElementById('msg-box');
-        box.innerHTML = "";
-        (cache[activePin] || []).forEach(m => {
-            if(m.isSignal) return;
-            const isImg = m.txt.startsWith('data:image');
-            const content = isImg ? `<img src="${m.txt}" onclick="window.open(this.src)">` : m.txt;
-            box.innerHTML += `<div class="bubble ${m.sender === my.pin ? 'sent' : 'recv'}">${content}</div>`;
+    function updateUI() {
+        if(!activePeer) return;
+        const screen = document.getElementById('msg-render');
+        screen.innerHTML = "";
+        (localDB[activePeer] || []).forEach(m => {
+            if(m.sig) return;
+            const isImg = m.val.startsWith('data:image');
+            screen.innerHTML += `<div class="bubble ${m.from === userData.pin ? 'sent' : 'recv'}">
+                ${isImg ? `<img src="${m.val}">` : m.val}
+            </div>`;
         });
-        box.scrollTop = box.scrollHeight;
+        screen.scrollTop = screen.scrollHeight;
     }
 
-    function pushMsg(customTxt = null, signal = false) {
-        let t = customTxt || document.getElementById('m-text').value.trim();
-        if(!t || !activePin) return;
+    function broadcastMsg(val = null, isSig = false) {
+        let txt = val || document.getElementById('msg-input').value.trim();
+        if(!txt || !activePeer) return;
 
-        if(!cache[activePin]) cache[activePin] = [];
-        cache[activePin].push({ sender: my.pin, txt: t, isSignal: signal });
-        localStorage.setItem('elite_v30_db', JSON.stringify(cache));
+        if(!localDB[activePeer]) localDB[activePeer] = [];
+        localDB[activePeer].push({ from: userData.pin, val: txt, sig: isSig });
+        localStorage.setItem('ultra_v32_db', JSON.stringify(localDB));
         
-        if(!signal) drawMsgs();
-        document.getElementById('m-text').value = "";
-        apiCall(`action=send&from=${my.pin}&from_name=${encodeURIComponent(my.name)}&to=${activePin}&msg=${encodeURIComponent(t)}`);
+        if(!isSig) {
+            updateUI();
+            document.getElementById('msg-input').value = "";
+        }
+        serverSync(`action=send&from=${userData.pin}&from_name=${encodeURIComponent(userData.name)}&to=${activePeer}&msg=${encodeURIComponent(txt)}`);
     }
 
     function sendImage(el) {
         if(el.files[0]) {
             let r = new FileReader();
-            r.onload = (e) => pushMsg(e.target.result);
+            r.onload = (e) => broadcastMsg(e.target.result);
             r.readAsDataURL(el.files[0]);
         }
     }
 
-    // CALLING LOGIC
-    async function initiateCall(type) {
-        currentCallType = type;
-        isBusy = true;
+    async function prepCall(type) {
+        cType = type;
         document.getElementById('call-overlay').classList.remove('hidden');
-        document.getElementById('call-name').innerText = document.getElementById('peer-name').innerText;
-        document.getElementById('call-av').innerText = document.getElementById('peer-av').innerText;
-        document.getElementById('snd-ring').play();
-        await setupMedia(type);
-        pushMsg(`[SIG_CALL:${type}]`, true);
+        document.getElementById('call-scr-name').innerText = document.getElementById('peer-chat-name').innerText;
+        document.getElementById('call-scr-av').innerText = document.getElementById('peer-chat-av').innerText;
+        document.getElementById('ring-tone').play();
+        await streamOn(type);
+        broadcastMsg(`[CALL_REQ:${type}]`, true);
     }
 
-    async function setupMedia(type) {
+    async function streamOn(type) {
         try {
-            if(stream) stream.getTracks().forEach(t => t.stop());
-            stream = await navigator.mediaDevices.getUserMedia({ video: type === 'Video', audio: true });
-            document.getElementById('local-video').srcObject = stream;
-            document.getElementById('local-video').classList.toggle('hidden', type === 'Voice');
-        } catch(e) { hangup(); }
+            if(mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+            mediaStream = await navigator.mediaDevices.getUserMedia({ video: type === 'Video', audio: true });
+            document.getElementById('local-v').srcObject = mediaStream;
+            document.getElementById('local-v').classList.toggle('hidden', type === 'Voice');
+        } catch(e) { killCall(); }
     }
 
-    function acceptIncoming() {
-        document.getElementById('snd-ring').pause();
-        document.getElementById('ans-btn').classList.add('hidden');
-        document.getElementById('call-status').innerText = "LIVE CONNECTION";
-        setupMedia(currentCallType).then(() => {
-            document.getElementById('remote-video').srcObject = stream;
+    function answerCall() {
+        document.getElementById('ring-tone').pause();
+        document.getElementById('btn-ans').classList.add('hidden');
+        document.getElementById('call-scr-status').innerText = "LIVE NODE CONNECTED";
+        streamOn(cType).then(() => {
+            document.getElementById('remote-v').srcObject = mediaStream;
         });
     }
 
-    function hangup() {
-        document.getElementById('snd-ring').pause();
-        if(stream) stream.getTracks().forEach(t => t.stop());
+    function killCall() {
+        document.getElementById('ring-tone').pause();
+        if(mediaStream) mediaStream.getTracks().forEach(t => t.stop());
         document.getElementById('call-overlay').classList.add('hidden');
-        if(activePin) apiCall(`action=send&from=${my.pin}&from_name=${encodeURIComponent(my.name)}&to=${activePin}&msg=[SIG_END]`);
-        isBusy = false;
+        if(activePeer) serverSync(`action=send&from=${userData.pin}&from_name=${encodeURIComponent(userData.name)}&to=${activePeer}&msg=[CALL_END]`);
     }
 
-    function sync() {
-        if(!my || isBusy && !currentCallType) return;
-        apiCall(`action=getMessages&myPin=${my.pin}`, "onSync");
+    function coreSync() {
+        if(!userData || lock) return;
+        lock = true;
+        serverSync(`action=getMessages&myPin=${userData.pin}`, "onGlobalSync");
     }
 
-    window.onSync = (data) => {
+    window.onGlobalSync = (data) => {
+        lock = false;
         if(data && data.length > 0) {
             data.forEach(m => {
-                if(!cache[m.sender]) cache[m.sender] = [];
-                if(!cache[m.sender].some(x => x.txt === m.txt)) {
+                if(!localDB[m.sender]) localDB[m.sender] = [];
+                if(!localDB[m.sender].some(x => x.val === m.txt)) {
                     
-                    let isCall = m.txt.includes("[SIG_CALL:");
-                    let isEnd = m.txt === "[SIG_END]";
-
-                    cache[m.sender].push({ sender: m.sender, txt: m.txt, isSignal: isCall || isEnd });
+                    let isCall = m.txt.includes("[CALL_REQ:");
+                    let isEnd = m.txt === "[CALL_END]";
+                    
+                    localDB[m.sender].push({ from: m.sender, val: m.txt, sig: isCall || isEnd });
 
                     if(isCall) {
-                        activePin = m.sender; // Lock the sender
-                        currentCallType = m.txt.includes("Video") ? "Video" : "Voice";
+                        cType = m.txt.includes("Video") ? "Video" : "Voice";
                         document.getElementById('call-overlay').classList.remove('hidden');
-                        document.getElementById('ans-btn').classList.remove('hidden');
-                        document.getElementById('call-name').innerText = m.sender_name;
-                        document.getElementById('call-av').innerText = m.sender_name.charAt(0);
-                        document.getElementById('call-status').innerText = `INCOMING ${currentCallType}`;
-                        document.getElementById('snd-ring').play();
+                        document.getElementById('btn-ans').classList.remove('hidden');
+                        document.getElementById('call-scr-name').innerText = m.sender_name;
+                        document.getElementById('call-scr-status').innerText = `INCOMING ${cType.toUpperCase()}`;
+                        document.getElementById('ring-tone').play();
                     } else if(isEnd) {
-                        hangup();
+                        killCall();
                     } else {
-                        document.getElementById('snd-msg').play();
-                        // Open chat automatically for new messages
-                        if(activePin !== m.sender) openChat(m.sender_name, m.sender);
+                        document.getElementById('msg-tone').play();
+                        // AUTO-OPEN CHAT LOGIC (Always Wake)
+                        if(activePeer !== m.sender) {
+                            initChat(m.sender_name, m.sender);
+                        }
                     }
                 }
             });
-            localStorage.setItem('elite_v30_db', JSON.stringify(cache));
-            drawMsgs();
+            localStorage.setItem('ultra_v32_db', JSON.stringify(localDB));
+            updateUI();
         }
-    }
+    };
 
-    function closeChat() {
-        document.getElementById('page-chat').classList.add('hidden');
-        document.getElementById('page-home').classList.remove('hidden');
-        activePin = null;
+    function exitChat() {
+        document.getElementById('p-chat').classList.add('hidden');
+        document.getElementById('p-home').classList.remove('hidden');
+        activePeer = null;
     }
 </script>
 </body>
