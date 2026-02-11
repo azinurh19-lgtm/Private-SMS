@@ -3,503 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Elite v200 | Ultra Node</title>
+    <title>Elite v300 | Final Node</title>
     <style>
-        :root { 
-            --neon: #00f2ff; 
-            --bg: #000000; 
-            --card: #0d0d0d; 
-            --border: #1a1a1a; 
-            --text: #ffffff;
-            --danger: #ff3b30;
-            --success: #4cd964;
-        }
-
-        * { 
-            box-sizing: border-box; 
-            margin: 0; padding: 0; 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body { 
-            background: var(--bg); 
-            color: var(--text); 
-            height: 100vh; 
-            width: 100vw; 
-            overflow: hidden; 
-            position: fixed; 
-        }
-
+        :root { --neon: #00f2ff; --bg: #000; --card: #0d0d0d; --line: #1a1a1a; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--bg); color: #fff; height: 100vh; overflow: hidden; position: fixed; width: 100vw; }
         .hidden { display: none !important; }
-
-        /* Navigation & Header */
-        header {
-            padding: 15px 20px;
-            background: var(--card);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 70px;
-            z-index: 100;
-        }
-
-        .node-info { display: flex; align-items: center; gap: 12px; }
-        .status-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; box-shadow: 0 0 10px var(--success); }
-
-        /* Layer System */
-        .layer { 
-            position: fixed; 
-            top: 0; left: 0; 
-            width: 100%; height: 100%; 
-            display: flex; 
-            flex-direction: column; 
-            background: var(--bg); 
-            z-index: 50; 
-        }
-
-        .container { 
-            flex: 1; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            padding: 20px;
-        }
-
-        .auth-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            padding: 40px 30px;
-            width: 100%;
-            max-width: 420px;
-            border-radius: 4px;
-            text-align: center;
-        }
-
-        /* Forms & Inputs */
-        h1 { font-size: 24px; font-weight: 200; letter-spacing: 6px; color: var(--neon); margin-bottom: 30px; }
-        .node-input {
-            width: 100%;
-            background: #000;
-            border: 1px solid var(--border);
-            padding: 18px;
-            color: var(--neon);
-            font-size: 16px;
-            margin-bottom: 20px;
-            outline: none;
-            text-align: center;
-            border-radius: 2px;
-            transition: border 0.3s;
-        }
-        .node-input:focus { border-color: var(--neon); }
         
-        .primary-btn {
-            width: 100%;
-            padding: 18px;
-            border: none;
-            background: var(--neon);
-            color: #000;
-            font-weight: 800;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            border-radius: 2px;
-        }
-
-        /* Chat Hardware UI */
-        #chat-flow {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            background: #000;
-            padding-bottom: 100px;
-        }
-
-        .message {
-            max-width: 85%;
-            padding: 12px 16px;
-            font-size: 15px;
-            line-height: 1.5;
-            border-radius: 2px;
-            position: relative;
-            word-wrap: break-word;
-        }
-
-        .sent { align-self: flex-end; background: var(--neon); color: #000; font-weight: 500; border-bottom-right-radius: 0; }
-        .received { align-self: flex-start; background: var(--card); border: 1px solid var(--border); border-bottom-left-radius: 0; }
+        /* Layouts */
+        .layer { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--bg); z-index: 100; }
+        .center-box { background: var(--card); border: 1px solid var(--line); padding: 40px; width: 92%; max-width: 400px; margin: auto; text-align: center; border-radius: 4px; }
         
-        .time { font-size: 9px; opacity: 0.6; margin-top: 5px; display: block; text-align: right; }
+        /* UI Elements */
+        h1 { font-size: 22px; font-weight: 200; letter-spacing: 5px; color: var(--neon); margin-bottom: 25px; }
+        .node-in { width: 100%; background: #000; border: 1px solid var(--line); padding: 18px; color: var(--neon); font-size: 16px; margin-bottom: 20px; text-align: center; outline: none; }
+        .node-btn { width: 100%; padding: 18px; border: none; background: var(--neon); color: #000; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
 
-        .input-bar {
-            padding: 15px 20px;
-            background: var(--card);
-            border-top: 1px solid var(--border);
-            display: flex;
-            gap: 12px;
-            position: absolute;
-            bottom: 0; width: 100%;
-            padding-bottom: calc(15px + env(safe-area-inset-bottom));
-        }
+        /* Chat System */
+        .header { padding: 15px 20px; background: #0a0a0a; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+        #chat-flow { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; background: #000; }
+        .bubble { max-width: 80%; padding: 12px 16px; font-size: 14px; border-radius: 2px; line-height: 1.4; position: relative; }
+        .sent { align-self: flex-end; background: var(--neon); color: #000; font-weight: 500; }
+        .recv { align-self: flex-start; background: var(--card); border: 1px solid var(--line); }
 
-        .text-in { flex: 1; background: #000; border: 1px solid var(--border); padding: 14px; color: #fff; outline: none; border-radius: 4px; }
-        .send-btn { background: var(--neon); border: none; width: 60px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; }
+        .input-bar { padding: 15px; background: #0a0a0a; border-top: 1px solid var(--line); display: flex; gap: 10px; padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
+        .msg-input { flex: 1; background: #000; border: 1px solid var(--line); padding: 12px; color: #fff; outline: none; }
 
-        /* Call System UI */
-        #call-ui {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .video-container { flex: 1; position: relative; background: #050505; }
-        #remote-video { width: 100%; height: 100%; object-fit: cover; }
-        #local-video { 
-            width: 110px; height: 160px; 
-            position: absolute; top: 30px; right: 20px; 
-            border: 1px solid var(--neon); 
-            border-radius: 4px;
-            object-fit: cover; 
-            z-index: 1010;
-        }
-
-        .call-meta { position: absolute; top: 15%; width: 100%; text-align: center; }
-        .call-meta h2 { font-size: 32px; font-weight: 300; margin-bottom: 10px; }
-        .call-meta p { color: var(--neon); text-transform: uppercase; letter-spacing: 4px; font-size: 12px; }
-
-        .call-actions { 
-            padding: 60px; 
-            display: flex; 
-            justify-content: center; 
-            gap: 40px; 
-            position: absolute; 
-            bottom: 0; 
-            width: 100%; 
-            background: linear-gradient(transparent, rgba(0,0,0,0.8));
-        }
-
-        .c-btn { width: 75px; height: 75px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; }
-        .btn-accept { background: var(--success); }
-        .btn-hangup { background: var(--danger); }
-
-        /* Notifications CSS */
-        #custom-notif {
-            position: fixed; top: 20px; left: 10px; right: 10px;
-            background: var(--card); border: 1px solid var(--neon);
-            padding: 15px; border-radius: 4px; z-index: 2000;
-            display: flex; align-items: center; gap: 15px;
-            animation: slideDown 0.5s ease;
-        }
-        @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+        /* Calling & Notifications */
+        #call-ui { position: fixed; inset: 0; background: #000; z-index: 2000; display: flex; flex-direction: column; }
+        .video-v { flex: 1; position: relative; }
+        #v-remote { width: 100%; height: 100%; object-fit: cover; }
+        #v-local { width: 100px; height: 140px; position: absolute; top: 20px; right: 20px; border: 1px solid var(--neon); z-index: 2010; }
+        .call-ctrl { position: absolute; bottom: 50px; width: 100%; display: flex; justify-content: center; gap: 40px; }
+        .c-round { width: 70px; height: 70px; border-radius: 50%; border: none; font-weight: bold; color: #fff; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <audio id="ringtone" src="https://assets.mixkit.co/active_storage/sfx/1359/1359-preview.mp3" loop></audio>
-    <audio id="msg-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
+    <audio id="ring" src="https://assets.mixkit.co/active_storage/sfx/1359/1359-preview.mp3" loop></audio>
+    <audio id="ping" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
-    <div id="notif-wrapper"></div>
-
-    <div id="layer-reg" class="layer">
-        <div class="container">
-            <div class="auth-card">
-                <h1>ELITE NODE</h1>
-                <input type="text" id="reg-name" class="node-input" placeholder="ENTER UNIQUE NAME">
-                <button class="primary-btn" onclick="registerNode()">ACTIVATE SYSTEM</button>
-            </div>
+    <div id="scr-reg" class="layer">
+        <div class="center-box">
+            <h1>ELITE v300</h1>
+            <input type="text" id="reg-name" class="node-in" placeholder="YOUR NAME">
+            <button class="node-btn" onclick="initNode()">ACTIVATE</button>
         </div>
     </div>
 
-    <div id="layer-dash" class="layer hidden">
-        <div class="container">
-            <div class="auth-card">
-                <p style="color:#666; font-size:11px; margin-bottom:10px; letter-spacing:2px;">IDENTITY VERIFIED</p>
-                <h2 id="my-display-name" style="font-weight:300; margin-bottom:20px;">USER</h2>
-                <div style="background:#000; padding:30px; border:1px solid var(--border); margin-bottom:30px;">
-                    <p style="color:#444; font-size:10px; margin-bottom:5px;">SYSTEM ACCESS PIN</p>
-                    <h1 id="my-display-pin" style="margin:0; font-size:40px; letter-spacing:8px;">000000</h1>
-                </div>
-                <input type="number" id="peer-pin-input" class="node-input" placeholder="TARGET PIN">
-                <button class="primary-btn" onclick="requestLink()">ESTABLISH LINK</button>
-            </div>
+    <div id="scr-dash" class="layer hidden">
+        <div class="center-box">
+            <p id="d-name" style="color:#444; font-size:10px; margin-bottom:10px;">NODE READY</p>
+            <h1 id="d-pin" style="font-size:45px; color:var(--neon); letter-spacing:8px; margin-bottom:30px;">000000</h1>
+            <input type="number" id="t-pin" class="node-in" placeholder="PEER PIN">
+            <button class="node-btn" onclick="linkNode()">CONNECT</button>
         </div>
     </div>
 
-    <div id="layer-chat" class="layer hidden">
-        <header>
-            <div class="node-info">
-                <div onclick="goHome()" style="cursor:pointer; color:var(--neon); font-size:12px; margin-right:10px;">[EXIT]</div>
-                <div>
-                    <b id="chat-peer-name" style="font-size:18px;">PEER</b><br>
-                    <div style="display:flex; align-items:center; gap:5px;">
-                        <div class="status-dot"></div>
-                        <small style="color:var(--success); font-size:9px;">SECURE LINK</small>
-                    </div>
-                </div>
+    <div id="scr-chat" class="layer hidden">
+        <div class="header">
+            <div onclick="exitChat()" style="cursor:pointer; color:var(--neon);">[BACK]</div>
+            <div id="p-name">PEER</div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="startCall('Video')" style="background:none; border:1px solid var(--neon); color:var(--neon); padding:5px 10px; font-size:10px;">VIDEO</button>
+                <button onclick="startCall('Voice')" style="background:none; border:1px solid var(--neon); color:var(--neon); padding:5px 10px; font-size:10px;">VOICE</button>
             </div>
-            <div style="display:flex; gap:12px;">
-                <button onclick="initiateCall('Video')" style="background:none; border:1px solid var(--neon); color:var(--neon); padding:8px 12px; font-size:11px; border-radius:2px;">VIDEO</button>
-                <button onclick="initiateCall('Voice')" style="background:none; border:1px solid var(--neon); color:var(--neon); padding:8px 12px; font-size:11px; border-radius:2px;">VOICE</button>
-            </div>
-        </header>
-
+        </div>
         <div id="chat-flow"></div>
-
         <div class="input-bar">
-            <input type="text" id="main-input" class="text-in" placeholder="TYPE ENCRYPTED MESSAGE...">
-            <button class="send-btn" onclick="handleSend()">SEND</button>
+            <input type="text" id="chat-in" class="msg-input" placeholder="ENCRYPTED MSG...">
+            <button onclick="sendMsg()" class="node-btn" style="width:80px; padding:0;">SEND</button>
         </div>
     </div>
 
     <div id="call-ui" class="hidden">
-        <div class="video-container">
-            <video id="remote-video" autoplay playsinline></video>
-            <video id="local-video" autoplay playsinline muted></video>
+        <div class="video-v">
+            <video id="v-remote" autoplay playsinline></video>
+            <video id="v-local" autoplay playsinline muted></video>
         </div>
-        <div class="call-meta">
-            <h2 id="caller-name">PEER NODE</h2>
-            <p id="call-status">CONNECTING...</p>
+        <div style="position:absolute; top:15%; width:100%; text-align:center;">
+            <h2 id="c-peer-name">PEER</h2>
+            <p id="c-status" style="color:var(--neon); letter-spacing:3px;">INCOMING...</p>
         </div>
-        <div class="call-actions">
-            <button id="btn-accept" class="c-btn btn-accept" onclick="acceptCall()">PICK</button>
-            <button class="c-btn btn-hangup" onclick="hangupCall()">END</button>
+        <div class="call-ctrl">
+            <button id="btn-ans" class="c-round" style="background:#2ecc71;" onclick="answer()">PICK</button>
+            <button class="c-round" style="background:#e74c3c;" onclick="hangup()">END</button>
         </div>
     </div>
 
 <script>
-    const APP_URL = "https://script.google.com/macros/s/AKfycbz4aeKaJI5X3Y9a4MSvc-UfEkvnilBHtxCVCoxDPhOH4XhTJY155HwWdVVkZJguTEiU/exec";
-    
-    let config = JSON.parse(localStorage.getItem('elite_v200_cfg')) || null;
-    let messagesDB = JSON.parse(localStorage.getItem('elite_v200_db')) || {};
-    let activePeer = null;
-    let mediaStream = null;
-    let isBusy = false;
-    let callActiveType = null;
+    const API = "https://script.google.com/macros/s/AKfycbz4aeKaJI5X3Y9a4MSvc-UfEkvnilBHtxCVCoxDPhOH4XhTJY155HwWdVVkZJguTEiU/exec";
+    let me = JSON.parse(localStorage.getItem('node_v300')) || null;
+    let peer = null, db = {}, lock = false, stream = null, callType = null;
 
-    // Startup
-    window.onload = () => {
-        if(config) {
-            setupDash();
-            requestNotificationPermission();
-        }
-    };
+    window.onload = () => { if(me) boot(); };
 
-    function requestNotificationPermission() {
-        if ("Notification" in window) {
-            Notification.requestPermission();
-        }
+    function initNode() {
+        let n = document.getElementById('reg-name').value.trim();
+        if(!n) return;
+        me = { name: n, pin: Math.floor(100000 + Math.random() * 900000).toString() };
+        localStorage.setItem('node_v300', JSON.stringify(me));
+        exec(`action=register&name=${encodeURIComponent(n)}&pin=${me.pin}`);
+        boot();
     }
 
-    function registerNode() {
-        const name = document.getElementById('reg-name').value.trim();
-        if(!name) return;
-        
-        config = {
-            name: name,
-            pin: Math.floor(100000 + Math.random() * 900000).toString(),
-            registered: true
-        };
-        
-        localStorage.setItem('elite_v200_cfg', JSON.stringify(config));
-        apiCall(`action=register&name=${encodeURIComponent(name)}&pin=${config.pin}`);
-        setupDash();
+    function boot() {
+        document.getElementById('scr-reg').classList.add('hidden');
+        document.getElementById('scr-dash').classList.remove('hidden');
+        document.getElementById('d-name').innerText = me.name.toUpperCase();
+        document.getElementById('d-pin').innerText = me.pin;
+        setInterval(pulse, 1500);
+        if("Notification" in window) Notification.requestPermission();
     }
 
-    function setupDash() {
-        document.getElementById('layer-reg').classList.add('hidden');
-        document.getElementById('layer-dash').classList.remove('hidden');
-        document.getElementById('my-display-name').innerText = config.name.toUpperCase();
-        document.getElementById('my-display-pin').innerText = config.pin;
-        
-        // Polling Engine Start
-        setInterval(masterPoller, 1500);
+    function exec(p, cb) {
+        const s = document.createElement('script');
+        s.src = `${API}?${p}&_z=${Date.now()}${cb ? '&callback='+cb : ''}`;
+        document.body.appendChild(s);
+        s.onload = () => s.remove();
     }
 
-    function apiCall(params, callback) {
-        const script = document.createElement('script');
-        const timestamp = Date.now();
-        script.src = `${APP_URL}?${params}&_cb=${timestamp}${callback ? '&callback='+callback : ''}`;
-        document.body.appendChild(script);
-        script.onload = () => { script.remove(); isBusy = false; };
+    function linkNode() {
+        let p = document.getElementById('t-pin').value;
+        if(p) exec(`action=getUser&pin=${p}`, "onPeerFound");
     }
 
-    function requestLink() {
-        const pin = document.getElementById('peer-pin-input').value;
-        if(pin.length === 6) {
-            apiCall(`action=getUser&pin=${pin}`, "handlePeerDiscovery");
-        }
+    window.onPeerFound = (res) => { if(res.name) openChat(res.name, res.pin); };
+
+    function openChat(n, p) {
+        peer = { name: n, pin: p };
+        document.getElementById('scr-dash').classList.add('hidden');
+        document.getElementById('scr-chat').classList.remove('hidden');
+        document.getElementById('p-name').innerText = n.toUpperCase();
+        render();
     }
 
-    window.handlePeerDiscovery = (data) => {
-        if(data && data.name) {
-            startChatSession(data.name, data.pin);
-        } else {
-            showNotification("SYSTEM", "NODE NOT FOUND");
-        }
-    };
-
-    function startChatSession(name, pin) {
-        activePeer = { name: name, pin: pin };
-        document.getElementById('layer-dash').classList.add('hidden');
-        document.getElementById('layer-chat').classList.remove('hidden');
-        document.getElementById('chat-peer-name').innerText = name.toUpperCase();
-        refreshChatUI();
-    }
-
-    function refreshChatUI() {
-        if(!activePeer) return;
-        const box = document.getElementById('chat-flow');
-        box.innerHTML = "";
-        
-        const history = messagesDB[activePeer.pin] || [];
-        history.forEach(m => {
-            if(m.isSignal) return;
-            const div = document.createElement('div');
-            div.className = `message ${m.from === config.pin ? 'sent' : 'received'}`;
-            div.innerHTML = `${m.text}<span class="time">${new Date(m.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
-            box.appendChild(div);
+    function render() {
+        if(!peer) return;
+        const f = document.getElementById('chat-flow');
+        f.innerHTML = "";
+        (db[peer.pin] || []).forEach(m => {
+            if(!m.sig) f.innerHTML += `<div class="bubble ${m.f === me.pin ? 'sent' : 'recv'}">${m.v}</div>`;
         });
-        box.scrollTop = box.scrollHeight;
+        f.scrollTop = f.scrollHeight;
     }
 
-    function handleSend() {
-        const input = document.getElementById('main-input');
-        const text = input.value.trim();
-        if(!text || !activePeer) return;
-
-        saveMessage(activePeer.pin, config.pin, text, false);
-        input.value = "";
-        refreshChatUI();
-        
-        apiCall(`action=send&from=${config.pin}&from_name=${encodeURIComponent(config.name)}&to=${activePeer.pin}&msg=${encodeURIComponent(text)}`);
+    function sendMsg(val = null, sig = false) {
+        let txt = val || document.getElementById('chat-in').value.trim();
+        if(!txt || !peer) return;
+        if(!db[peer.pin]) db[peer.pin] = [];
+        db[peer.pin].push({ f: me.pin, v: txt, sig: sig });
+        if(!sig) { render(); document.getElementById('chat-in').value = ""; }
+        exec(`action=send&from=${me.pin}&from_name=${encodeURIComponent(me.name)}&to=${peer.pin}&msg=${encodeURIComponent(txt)}`);
     }
 
-    function saveMessage(peerPin, fromPin, text, isSignal) {
-        if(!messagesDB[peerPin]) messagesDB[peerPin] = [];
-        messagesDB[peerPin].push({
-            from: fromPin,
-            text: text,
-            time: Date.now(),
-            isSignal: isSignal
-        });
-        localStorage.setItem('elite_v200_db', JSON.stringify(messagesDB));
-    }
-
-    // Call Management
-    async function initiateCall(type) {
-        callActiveType = type;
+    // Call Engine
+    async function startCall(t) {
+        callType = t;
         document.getElementById('call-ui').classList.remove('hidden');
-        document.getElementById('btn-accept').classList.add('hidden');
-        document.getElementById('caller-name').innerText = activePeer.name;
-        document.getElementById('call-status').innerText = `DIALING ${type.toUpperCase()}...`;
-        document.getElementById('ringtone').play();
-        
-        await setupMedia(type);
-        apiCall(`action=send&from=${config.pin}&from_name=${encodeURIComponent(config.name)}&to=${activePeer.pin}&msg=[SIGNAL_CALL_${type}]`);
+        document.getElementById('btn-ans').classList.add('hidden');
+        document.getElementById('ring').play();
+        stream = await navigator.mediaDevices.getUserMedia({video: t==='Video', audio:true});
+        document.getElementById('v-local').srcObject = stream;
+        sendMsg(`[CALL_${t}]`, true);
     }
 
-    async function setupMedia(type) {
-        try {
-            if(mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-            mediaStream = await navigator.mediaDevices.getUserMedia({ 
-                video: type === 'Video', 
-                audio: true 
-            });
-            document.getElementById('local-video').srcObject = mediaStream;
-            document.getElementById('local-video').classList.toggle('hidden', type === 'Voice');
-        } catch(e) { 
-            showNotification("ERROR", "MEDIA ACCESS DENIED");
-            hangupCall();
-        }
-    }
-
-    function acceptCall() {
-        document.getElementById('ringtone').pause();
-        document.getElementById('btn-accept').classList.add('hidden');
-        document.getElementById('call-status').innerText = "CONNECTION LIVE";
-        setupMedia(callActiveType).then(() => {
-            document.getElementById('remote-video').srcObject = mediaStream;
+    function answer() {
+        document.getElementById('ring').pause();
+        document.getElementById('btn-ans').classList.add('hidden');
+        navigator.mediaDevices.getUserMedia({video: callType==='Video', audio:true}).then(s => {
+            stream = s;
+            document.getElementById('v-local').srcObject = s;
+            document.getElementById('v-remote').srcObject = s;
         });
     }
 
-    function hangupCall() {
-        document.getElementById('ringtone').pause();
-        if(mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+    function hangup() {
+        document.getElementById('ring').pause();
+        if(stream) stream.getTracks().forEach(t => t.stop());
         document.getElementById('call-ui').classList.add('hidden');
-        if(activePeer) apiCall(`action=send&from=${config.pin}&to=${activePeer.pin}&msg=[SIGNAL_END]`);
-        callActiveType = null;
+        if(peer) exec(`action=send&from=${me.pin}&to=${peer.pin}&msg=[END]`);
     }
 
-    // Polling & Logic Engine
-    function masterPoller() {
-        if(!config || isBusy) return;
-        isBusy = true;
-        apiCall(`action=getMessages&myPin=${config.pin}`, "processIncoming");
+    // Polling Watchdog
+    function pulse() {
+        if(!me || lock) return;
+        lock = true;
+        exec(`action=getMessages&myPin=${me.pin}`, "onPulse");
     }
 
-    window.processIncoming = (data) => {
-        isBusy = false;
+    window.onPulse = (data) => {
+        lock = false;
         if(data && data.length > 0) {
             data.forEach(m => {
-                const history = messagesDB[m.sender] || [];
-                if(!history.some(h => h.text === m.txt && h.from === m.sender)) {
-                    
-                    const isCall = m.txt.includes("[SIGNAL_CALL_");
-                    const isEnd = m.txt === "[SIGNAL_END]";
-                    
-                    saveMessage(m.sender, m.sender, m.txt, isCall || isEnd);
-
-                    if(isCall) {
-                        callActiveType = m.txt.includes("Video") ? "Video" : "Voice";
-                        activePeer = { name: m.sender_name, pin: m.sender };
-                        triggerIncomingCallUI(m.sender_name);
-                    } else if(isEnd) {
-                        hangupCall();
-                    } else {
-                        document.getElementById('msg-sound').play();
-                        showNotification(m.sender_name, m.txt);
-                        // AUTO WAKE CHAT
-                        startChatSession(m.sender_name, m.sender);
+                if(!db[m.sender]) db[m.sender] = [];
+                if(!db[m.sender].some(x => x.v === m.txt)) {
+                    let isC = m.txt.includes("[CALL_"), isE = m.txt === "[END]";
+                    db[m.sender].push({ f: m.sender, v: m.txt, sig: isC || isE });
+                    if(isC) {
+                        callType = m.txt.includes("Video") ? "Video" : "Voice";
+                        peer = { name: m.sender_name, pin: m.sender };
+                        document.getElementById('call-ui').classList.remove('hidden');
+                        document.getElementById('btn-ans').classList.remove('hidden');
+                        document.getElementById('c-peer-name').innerText = m.sender_name;
+                        document.getElementById('ring').play();
+                    } else if(isE) { hangup(); }
+                    else {
+                        document.getElementById('ping').play();
+                        if (Notification.permission === "granted") new Notification(m.sender_name, {body: m.txt});
+                        openChat(m.sender_name, m.sender); // AUTO CHAT OPEN
                     }
                 }
             });
-            refreshChatUI();
+            render();
         }
-    };
-
-    function triggerIncomingCallUI(name) {
-        document.getElementById('call-ui').classList.remove('hidden');
-        document.getElementById('btn-accept').classList.remove('hidden');
-        document.getElementById('caller-name').innerText = name;
-        document.getElementById('call-status').innerText = `INCOMING ${callActiveType.toUpperCase()}`;
-        document.getElementById('ringtone').play();
     }
 
-    function showNotification(title, body) {
-        // System Notification
-        if (Notification.permission === "granted") {
-            new Notification(title, { body: body });
-        }
-        
-        // In-App Notification (For Unlocked Phones)
-        const wrapper = document.getElementById('notif-wrapper');
-        const div = document.createElement('div');
-        div.id = "custom-notif";
-        div.innerHTML = `<strong>${title}:</strong> <span>${body}</span>`;
-        wrapper.appendChild(div);
-        setTimeout(() => div.remove(), 4000);
-    }
-
-    function goHome() {
-        document.getElementById('layer-chat').classList.add('hidden');
-        document.getElementById('layer-dash').classList.remove('hidden');
-        activePeer = null;
+    function exitChat() {
+        document.getElementById('scr-chat').classList.add('hidden');
+        document.getElementById('scr-dash').classList.remove('hidden');
+        peer = null;
     }
 </script>
 </body>
